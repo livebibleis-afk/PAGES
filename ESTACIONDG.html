@@ -13,7 +13,7 @@
             --surface: #ffffff;
             --text-dark: #333333;
             --text-light: #777777;
-            --success: #25D366; /* WhatsApp color */
+            --success: #25D366; /* Color de WhatsApp */
         }
 
         * {
@@ -295,19 +295,77 @@
         }
         .toast.show { opacity: 1; }
 
+        /* Nueva sección de información incrustada */
+        .restaurant-info-section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+
+        .restaurant-info-section h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .restaurant-info-section p {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .btn-maps {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #4285F4; /* Google Maps Blue */
+            color: white;
+            text-decoration: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin: 10px 0 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .social-media-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+
+        .social-link:active { transform: scale(0.9); }
+        .facebook { background-color: #1877F2; }
+        .instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+        .tiktok { background-color: #000000; }
+        .youtube { background-color: #FF0000; }
+
         /* Footer */
         footer {
             text-align: center;
-            padding: 20px 15px 40px 15px;
+            padding: 30px 15px 40px 15px;
             font-size: 0.85rem;
             color: #888;
             line-height: 1.5;
-        }
-        
-        footer a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: bold;
         }
     </style>
 </head>
@@ -322,11 +380,28 @@
         <div class="info-box">
             <strong>IMPORTANTE:</strong> Todos los platos de fondo salen con entrada. Delivery Gratis. (+ S/ 1 por descartables).
         </div>
+        <div class="restaurant-info-section">
+            <h3>🍽️ Información Principal</h3>
+            <p>Platos criollos 🍱 y marinos 🐟, desayunos, opciones de dieta, sopas 🍜, jugos 🍹, gaseosas y cervezas 🍻. ¡Disfruta nuestro delivery gratis!</p>
+            <p><strong>📍 Dirección:</strong> AV. ARENALES N. 2074 - LINCE, Lima</p>
+            
+            <a href="https://maps.app.goo.gl/ZtpB3sbsSxp1MBcr9?g_st=ipc" target="_blank" class="btn-maps">
+                <i class="fas fa-map-marked-alt"></i> Ver en Google Maps
+            </a>
+
+            <h3>📱 Redes Sociales</h3>
+            <div class="social-media-container">
+                <a href="https://www.facebook.com/RestauranteEstacionDG/" target="_blank" class="social-link facebook" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://www.instagram.com/estacion.dg/" target="_blank" class="social-link instagram" title="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.tiktok.com/@estacion.dg?lang=es" target="_blank" class="social-link tiktok" title="TikTok"><i class="fab fa-tiktok"></i></a>
+                <a href="https://www.youtube.com/channel/UCNQ8gTp26cVqxwrnu8zWipw" target="_blank" class="social-link youtube" title="YouTube"><i class="fab fa-youtube"></i></a>
+            </div>
         </div>
+    </div>
 
     <footer>
-        Desarrollador web: <strong>Bvank Os 938683659</strong><br>
-        Power By Jeshua El Mesías
+        Desarrollador web: <strong>Bvank Os +51938 683 659</strong><br>
+        Power By Jeshua El Mesías Tal cual está
     </footer>
 
     <div class="floating-cart" onclick="toggleCart()">
@@ -403,8 +478,8 @@
             {
                 category: "Pescados / Marinos",
                 items: [
-                    { name: "Dúo Marino (Elija 2 opciones en WhatsApp)", price: 30 },
-                    { name: "Trío Marino (Elija 3 opciones en WhatsApp)", price: 37 },
+                    { name: "Dúo Marino (Elija opciones en WhatsApp)", price: 30 },
+                    { name: "Trío Marino (Elija opciones en WhatsApp)", price: 37 },
                     { name: "Opción: Ceviche", price: 0 },
                     { name: "Opción: Leche de Tigre", price: 0 },
                     { name: "Opción: Chaufa de Mariscos", price: 0 },
@@ -431,12 +506,13 @@
         // Renderizar Menú
         function renderMenu() {
             const container = document.getElementById('menu-container');
+            const infoSection = document.querySelector('.restaurant-info-section');
             
             menuData.forEach(cat => {
                 const title = document.createElement('h2');
                 title.className = 'category-title';
                 title.textContent = cat.category;
-                container.appendChild(title);
+                container.insertBefore(title, infoSection);
 
                 cat.items.forEach(item => {
                     const priceText = item.price > 0 ? `S/ ${item.price.toFixed(2)}` : 'Incluido';
@@ -457,7 +533,7 @@
                             </button>
                         </div>
                     `;
-                    container.appendChild(card);
+                    container.insertBefore(card, infoSection);
                 });
             });
         }
@@ -551,7 +627,6 @@
 
             let text = "*NUEVO PEDIDO - ESTACIÓN DG* 🍽️\n\n";
 
-            // Añadir datos del cliente si los ingresó
             if (customerName) text += `*Cliente:* ${customerName}\n`;
             if (customerAddress) text += `*Dirección:* ${customerAddress}\n`;
             if (customerName || customerAddress) text += `\n`;
@@ -569,19 +644,11 @@
             text += `\n*Total a pagar:* S/ ${total.toFixed(2)}\n`;
             text += `_Nota: + S/ 1.00 por descartables. (Delivery Gratis)_`;
 
-            // Número configurado
             const phoneNumber = "51918611944";
-            
-            // Codificar el texto para la URL
             const encodedText = encodeURIComponent(text);
-            
-            // Crear el enlace de WhatsApp (wa.me)
             const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedText}`;
 
-            // Abrir WhatsApp en una nueva pestaña/aplicación
             window.open(whatsappUrl, '_blank');
-            
-            // Cerrar el carrito
             toggleCart();
         }
 
