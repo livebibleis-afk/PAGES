@@ -26,7 +26,7 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-dark);
-            padding-bottom: 80px; /* Space for floating cart */
+            padding-bottom: 90px; /* Espacio para el carrito flotante */
         }
 
         header {
@@ -186,7 +186,7 @@
             background: var(--surface);
             border-radius: 20px 20px 0 0;
             padding: 20px;
-            max-height: 85vh;
+            max-height: 90vh;
             overflow-y: auto;
         }
 
@@ -203,6 +203,29 @@
             font-size: 1.5rem;
             cursor: pointer;
             color: var(--text-light);
+        }
+
+        /* Customer Info Inputs */
+        .customer-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .customer-info input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .customer-info input:focus {
+            border-color: var(--primary);
         }
 
         .cart-item {
@@ -271,6 +294,21 @@
             pointer-events: none;
         }
         .toast.show { opacity: 1; }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px 15px 40px 15px;
+            font-size: 0.85rem;
+            color: #888;
+            line-height: 1.5;
+        }
+        
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -286,6 +324,11 @@
         </div>
         </div>
 
+    <footer>
+        Desarrollador web: <strong>Bvank Os 938683659</strong><br>
+        Power By Jeshua El Mesías
+    </footer>
+
     <div class="floating-cart" onclick="toggleCart()">
         <i class="fas fa-shopping-cart"></i>
         <div class="cart-badge" id="cart-count">0</div>
@@ -297,11 +340,18 @@
                 <h2>Tu Pedido</h2>
                 <i class="fas fa-times close-cart" onclick="toggleCart()"></i>
             </div>
+            
+            <div class="customer-info">
+                <input type="text" id="customer-name" placeholder="Tu Nombre (Opcional)">
+                <input type="text" id="customer-address" placeholder="Dirección de envío">
+            </div>
+
             <div id="cart-items">
                 </div>
             <div class="cart-total" id="cart-total">Total: S/ 0.00</div>
-            <button class="btn-whatsapp" onclick="copyForWhatsApp()">
-                <i class="fab fa-whatsapp"></i> Copiar Pedido para WhatsApp
+            
+            <button class="btn-whatsapp" onclick="sendToWhatsApp()">
+                <i class="fab fa-whatsapp"></i> Enviar Pedido
             </button>
         </div>
     </div>
@@ -353,8 +403,8 @@
             {
                 category: "Pescados / Marinos",
                 items: [
-                    { name: "Dúo Marino (Elija 2 opciones en notas)", price: 30 },
-                    { name: "Trío Marino (Elija 3 opciones en notas)", price: 37 },
+                    { name: "Dúo Marino (Elija 2 opciones en WhatsApp)", price: 30 },
+                    { name: "Trío Marino (Elija 3 opciones en WhatsApp)", price: 37 },
                     { name: "Opción: Ceviche", price: 0 },
                     { name: "Opción: Leche de Tigre", price: 0 },
                     { name: "Opción: Chaufa de Mariscos", price: 0 },
@@ -479,7 +529,7 @@
             modal.classList.toggle('active');
         }
 
-        // Utilidades de copiado
+        // Copiar un solo ítem al portapapeles
         function copySingleItem(name, price) {
             const priceStr = price > 0 ? `- S/ ${price.toFixed(2)}` : '';
             const textToCopy = `${name} ${priceStr}`;
@@ -489,13 +539,24 @@
             });
         }
 
-        function copyForWhatsApp() {
+        // Generar enlace y enviar a WhatsApp
+        function sendToWhatsApp() {
             if (cart.length === 0) {
                 showToast("El carrito está vacío");
                 return;
             }
 
-            let text = "*NUEVO PEDIDO - ESTACIÓN DG* 🍽️\n\n*Detalle:*\n";
+            const customerName = document.getElementById('customer-name').value.trim();
+            const customerAddress = document.getElementById('customer-address').value.trim();
+
+            let text = "*NUEVO PEDIDO - ESTACIÓN DG* 🍽️\n\n";
+
+            // Añadir datos del cliente si los ingresó
+            if (customerName) text += `*Cliente:* ${customerName}\n`;
+            if (customerAddress) text += `*Dirección:* ${customerAddress}\n`;
+            if (customerName || customerAddress) text += `\n`;
+
+            text += "*Detalle del pedido:*\n";
             let total = 0;
 
             cart.forEach(item => {
@@ -508,13 +569,20 @@
             text += `\n*Total a pagar:* S/ ${total.toFixed(2)}\n`;
             text += `_Nota: + S/ 1.00 por descartables. (Delivery Gratis)_`;
 
-            navigator.clipboard.writeText(text).then(() => {
-                showToast("¡Pedido copiado! Listo para pegar en WhatsApp.");
-                toggleCart(); // Cerrar modal después de copiar
-            }).catch(err => {
-                console.error('Error al copiar: ', err);
-                alert("No se pudo copiar al portapapeles.");
-            });
+            // Número configurado
+            const phoneNumber = "51918611944";
+            
+            // Codificar el texto para la URL
+            const encodedText = encodeURIComponent(text);
+            
+            // Crear el enlace de WhatsApp (wa.me)
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedText}`;
+
+            // Abrir WhatsApp en una nueva pestaña/aplicación
+            window.open(whatsappUrl, '_blank');
+            
+            // Cerrar el carrito
+            toggleCart();
         }
 
         function showToast(message) {
