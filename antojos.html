@@ -199,7 +199,7 @@
             border-radius: 15px;
             padding: 20px;
             border: 2px solid var(--amarillo);
-            max-height: 80vh;
+            max-height: 85vh;
             display: flex;
             flex-direction: column;
         }
@@ -257,6 +257,37 @@
             cursor: pointer;
             font-weight: bold;
             font-size: 1rem;
+        }
+
+        /* --- Sección de Dirección --- */
+        .cart-address-section {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .cart-address-section label {
+            color: var(--amarillo);
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .cart-address-section input {
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background-color: #333;
+            color: white;
+            font-size: 1rem;
+            font-family: 'Roboto', sans-serif;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .cart-address-section input:focus {
+            outline: none;
+            border-color: var(--amarillo);
         }
 
         .cart-modal-footer {
@@ -495,8 +526,16 @@
             <h3>Tu Pedido 🛒</h3>
             <button class="close-modal" onclick="toggleModal(false)">&times;</button>
         </div>
+        
         <div id="cartItemsList" class="cart-items-list">
             </div>
+
+        <div class="cart-address-section">
+            <label for="deliveryAddress">📍 Datos de Entrega:</label>
+            <input type="text" id="deliveryAddress" placeholder="Ingresa tu dirección exacta" required>
+            <input type="text" id="deliveryRef" placeholder="Referencia (Ej: Frente al parque)">
+        </div>
+
         <div class="cart-modal-footer">
             <div class="cart-total-row">
                 <span>Total:</span>
@@ -575,7 +614,6 @@
             const subtotal = item.price * item.quantity;
             totalPrice += subtotal;
 
-            // Insertar elemento en el modal
             cartItemsList.innerHTML += `
                 <div class="cart-modal-item">
                     <div>
@@ -604,6 +642,16 @@
     function sendOrderViaWhatsApp() {
         if (cart.length === 0) return;
 
+        const addressInput = document.getElementById('deliveryAddress').value.trim();
+        const refInput = document.getElementById('deliveryRef').value.trim();
+
+        // Validación: Obligar al cliente a poner su dirección
+        if (addressInput === '') {
+            alert('¡Atención! Por favor ingresa tu dirección de entrega antes de enviar el pedido.');
+            document.getElementById('deliveryAddress').focus();
+            return;
+        }
+
         let message = "¡Hola Antojitos Salaverry! 👋\nQuiero realizar el siguiente pedido:\n\n";
         let total = 0;
 
@@ -614,7 +662,13 @@
         });
 
         message += `\n-------------------------\n`;
-        message += `💰 *Total a Pagar: S/ ${total.toFixed(2)}*\n-------------------------\n`;
+        message += `💰 *Total a Pagar: S/ ${total.toFixed(2)}*\n-------------------------\n\n`;
+        
+        message += `📍 *Dirección de entrega:*\n${addressInput}\n`;
+        if (refInput !== '') {
+            message += `📝 *Referencia:*\n${refInput}\n`;
+        }
+        
         message += `\n📌 _Pedido enviado desde el Menú Digital_`;
 
         // Codificar el texto para que la URL sea válida
