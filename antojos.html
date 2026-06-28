@@ -12,6 +12,7 @@
             --negro: #1a1a1a;
             --blanco: #ffffff;
             --gris-texto: #888;
+            --verde-wa: #25D366;
         }
 
         body {
@@ -20,6 +21,7 @@
             color: var(--blanco);
             margin: 0;
             padding: 0;
+            padding-bottom: 80px; /* Espacio para el carrito flotante */
         }
 
         header {
@@ -64,11 +66,6 @@
             padding: 20px;
             border-radius: 12px;
             border-left: 5px solid var(--rojo);
-            transition: transform 0.3s ease;
-        }
-
-        section:hover {
-            background: rgba(255, 255, 255, 0.06);
         }
 
         h2 {
@@ -83,16 +80,44 @@
 
         .item {
             display: flex;
+            flex-direction: column;
+            margin-bottom: 16px;
+            border-bottom: 1px dotted #333;
+            padding-bottom: 10px;
+        }
+
+        .item-row {
+            display: flex;
             justify-content: space-between;
-            margin-bottom: 12px;
+            align-items: center;
             font-size: 1rem;
-            border-bottom: 1px dotted #444;
-            padding-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .precio {
             font-weight: bold;
             color: var(--amarillo);
+        }
+
+        .btn-add {
+            background-color: var(--rojo);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            align-self: flex-end;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-add:hover {
+            background-color: #b81418;
+        }
+
+        .btn-add:active {
+            transform: scale(0.95);
         }
 
         .promo-box {
@@ -107,7 +132,163 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
-        /* Footer, Contacto Local y Firma */
+        /* --- Carrito Flotante --- */
+        .cart-float-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #222;
+            border-top: 3px solid var(--amarillo);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 999;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
+        }
+
+        .cart-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+
+        .cart-count {
+            background-color: var(--rojo);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .btn-view-cart {
+            background-color: var(--verde-wa);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* --- Modal del Carrito --- */
+        .cart-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .cart-modal-content {
+            background-color: #222;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid var(--amarillo);
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
+        .cart-modal-header h3 {
+            margin: 0;
+            font-family: 'Bangers', cursive;
+            font-size: 1.8rem;
+            color: var(--amarillo);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .cart-items-list {
+            overflow-y: auto;
+            margin: 15px 0;
+            flex-grow: 1;
+        }
+
+        .cart-modal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-qty {
+            background-color: #444;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .cart-modal-footer {
+            border-top: 1px solid #444;
+            padding-top: 15px;
+        }
+
+        .cart-total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .btn-submit-order {
+            background-color: var(--verde-wa);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Footer original */
         footer {
             text-align: center;
             padding: 40px 20px;
@@ -124,13 +305,12 @@
             flex-direction: column;
             align-items: center;
             gap: 12px;
-            letter-spacing: 1px;
         }
 
         .btn-whatsapp {
             display: inline-flex;
             align-items: center;
-            background-color: #25D366;
+            background-color: var(--verde-wa);
             color: white;
             padding: 10px 20px;
             border-radius: 30px;
@@ -138,20 +318,11 @@
             font-family: 'Roboto', sans-serif;
             font-weight: bold;
             font-size: 1.1rem;
-            transition: background-color 0.3s, transform 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            letter-spacing: normal;
         }
 
-        .btn-whatsapp:hover {
-            background-color: #128C7E;
-            transform: scale(1.05);
-        }
-
-        .btn-whatsapp svg {
+        .btn-whatsapp svg, .btn-submit-order svg {
             width: 24px;
             height: 24px;
-            margin-right: 10px;
             fill: currentColor;
         }
 
@@ -167,18 +338,10 @@
             color: var(--amarillo);
             text-decoration: none;
             font-weight: bold;
-            transition: color 0.3s;
         }
 
-        .firma-desarrollador a:hover {
-            color: #fff;
-            text-decoration: underline;
-        }
-
-        /* Ajustes para móviles */
         @media (max-width: 600px) {
             h1 { font-size: 2.5rem; }
-            section { padding: 15px; }
         }
     </style>
 </head>
@@ -193,48 +356,157 @@
     <div class="grid">
         <section>
             <h2>Platos a la Carta</h2>
-            <div class="item"><span>Milanesa de Pollo</span> <span class="precio">15.00</span></div>
-            <div class="item"><span>Pechuga a la Plancha</span> <span class="precio">17.00</span></div>
-            <div class="item"><span>Churrasco</span> <span class="precio">16.00</span></div>
-            <div class="item"><span>Bistec Apanado</span> <span class="precio">20.00</span></div>
-            <div class="item"><span>Tallarín Saltado de Pollo</span> <span class="precio">19.00</span></div>
-            <div class="item"><span>Lomo Saltado</span> <span class="precio">22.00</span></div>
-            <div class="item"><span>Chaufa Pollo / Carne</span> <span class="precio">17.00</span></div>
-            <div class="item"><span>Pollo Saltado</span> <span class="precio">19.00</span></div>
+            <div class="item">
+                <div class="item-row"><span>Milanesa de Pollo</span> <span class="precio">S/ 15.00</span></div>
+                <button class="btn-add" onclick="addToCart('Milanesa de Pollo', 15.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Pechuga a la Plancha</span> <span class="precio">S/ 17.00</span></div>
+                <button class="btn-add" onclick="addToCart('Pechuga a la Plancha', 17.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Churrasco</span> <span class="precio">S/ 16.00</span></div>
+                <button class="btn-add" onclick="addToCart('Churrasco', 16.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Bistec Apanado</span> <span class="precio">S/ 20.00</span></div>
+                <button class="btn-add" onclick="addToCart('Bistec Apanado', 20.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Tallarín Saltado de Pollo</span> <span class="precio">S/ 19.00</span></div>
+                <button class="btn-add" onclick="addToCart('Tallarín Saltado de Pollo', 19.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Lomo Saltado</span> <span class="precio">S/ 22.00</span></div>
+                <button class="btn-add" onclick="addToCart('Lomo Saltado', 22.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Chaufa Pollo / Carne</span> <span class="precio">S/ 17.00</span></div>
+                <button class="btn-add" onclick="addToCart('Chaufa Pollo / Carne', 17.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Pollo Saltado</span> <span class="precio">S/ 19.00</span></div>
+                <button class="btn-add" onclick="addToCart('Pollo Saltado', 19.00)">+ Agregar</button>
+            </div>
         </section>
 
         <section>
             <h2>Salchipapas</h2>
-            <div class="item"><span>Pollo Broaster + Hot Dog</span> <span class="precio">15.00</span></div>
-            <div class="item"><span>Salchipollo (Trozos Pollo + HD)</span> <span class="precio">15.00</span></div>
-            <div class="item"><span>Salchicorizo</span> <span class="precio">15.00</span></div>
-            <div class="item"><span>Salchi Clásica</span> <span class="precio">13.00</span></div>
-            <div class="item"><span>Salchi Especial (Huevo/Queso)</span> <span class="precio">22.00</span></div>
-            <div class="item"><span>Mostrito Chaufa</span> <span class="precio">18.50</span></div>
+            <div class="item">
+                <div class="item-row"><span>Pollo Broaster + Hot Dog</span> <span class="precio">S/ 15.00</span></div>
+                <button class="btn-add" onclick="addToCart('Pollo Broaster + Hot Dog', 15.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Salchipollo</span> <span class="precio">S/ 15.00</span></div>
+                <button class="btn-add" onclick="addToCart('Salchipollo', 15.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Salchicorizo</span> <span class="precio">S/ 15.00</span></div>
+                <button class="btn-add" onclick="addToCart('Salchicorizo', 15.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Salchi Clásica</span> <span class="precio">S/ 13.00</span></div>
+                <button class="btn-add" onclick="addToCart('Salchi Clásica', 13.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Salchi Especial</span> <span class="precio">S/ 22.00</span></div>
+                <button class="btn-add" onclick="addToCart('Salchi Especial', 22.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Mostrito Chaufa</span> <span class="precio">S/ 18.50</span></div>
+                <button class="btn-add" onclick="addToCart('Mostrito Chaufa', 18.50)">+ Agregar</button>
+            </div>
             <div class="promo-box">🔥 CONVIÉRTELO A ROYAL: S/ 3.00 MÁS</div>
         </section>
 
         <section>
             <h2>Sandwiches</h2>
-            <div class="item"><span>Pollo</span> <span class="precio">10.00</span></div>
-            <div class="item"><span>Hamburguesa</span> <span class="precio">10.00</span></div>
-            <div class="item"><span>Pollo Deshilachado</span> <span class="precio">10.00</span></div>
-            <div class="item"><span>Chorizo</span> <span class="precio">10.00</span></div>
-            <div class="item"><span>Milanesa</span> <span class="precio">12.00</span></div>
-            <div class="item"><span>Carnívoro (Hamb. + Chorizo)</span> <span class="precio">16.00</span></div>
+            <div class="item">
+                <div class="item-row"><span>Pollo</span> <span class="precio">S/ 10.00</span></div>
+                <button class="btn-add" onclick="addToCart('Sándwich de Pollo', 10.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Hamburguesa</span> <span class="precio">S/ 10.00</span></div>
+                <button class="btn-add" onclick="addToCart('Hamburguesa', 10.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Pollo Deshilachado</span> <span class="precio">S/ 10.00</span></div>
+                <button class="btn-add" onclick="addToCart('Pollo Deshilachado', 10.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Chorizo</span> <span class="precio">S/ 10.00</span></div>
+                <button class="btn-add" onclick="addToCart('Sándwich de Chorizo', 10.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Milanesa</span> <span class="precio">S/ 12.00</span></div>
+                <button class="btn-add" onclick="addToCart('Sándwich de Milanesa', 12.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Carnívoro</span> <span class="precio">S/ 16.00</span></div>
+                <button class="btn-add" onclick="addToCart('Sándwich Carnívoro', 16.00)">+ Agregar</button>
+            </div>
             <div class="promo-box">🍳 CONVIÉRTELO A LO POBRE: S/ 4.00 MÁS</div>
         </section>
 
         <section style="border-left-color: #4CAF50;">
             <h2>Jugos y Bebidas</h2>
-            <div class="item"><span>Especial</span> <span class="precio">13.00</span></div>
-            <div class="item"><span>Surtido</span> <span class="precio">12.00</span></div>
-            <div class="item"><span>Lúcuma o Fresa</span> <span class="precio">12.00</span></div>
-            <div class="item"><span>Mango o Piña</span> <span class="precio">10.00</span></div>
-            <div class="item"><span>Gaseosa 1/2 Litro</span> <span class="precio">4.50</span></div>
-            <div class="item"><span>Agua Mineral</span> <span class="precio">4.00</span></div>
+            <div class="item">
+                <div class="item-row"><span>Especial</span> <span class="precio">S/ 13.00</span></div>
+                <button class="btn-add" onclick="addToCart('Jugo Especial', 13.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Surtido</span> <span class="precio">S/ 12.00</span></div>
+                <button class="btn-add" onclick="addToCart('Jugo Surtido', 12.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Lúcuma o Fresa</span> <span class="precio">S/ 12.00</span></div>
+                <button class="btn-add" onclick="addToCart('Jugo Lúcuma o Fresa', 12.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Mango o Piña</span> <span class="precio">S/ 10.00</span></div>
+                <button class="btn-add" onclick="addToCart('Jugo Mango o Piña', 10.00)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Gaseosa 1/2 Litro</span> <span class="precio">S/ 4.50</span></div>
+                <button class="btn-add" onclick="addToCart('Gaseosa 1/2 Litro', 4.50)">+ Agregar</button>
+            </div>
+            <div class="item">
+                <div class="item-row"><span>Agua Mineral</span> <span class="precio">S/ 4.00</span></div>
+                <button class="btn-add" onclick="addToCart('Agua Mineral', 4.00)">+ Agregar</button>
+            </div>
             <div class="promo-box" style="background: #fff; color: #000;">🥛 ADICIONAL DE LECHE: S/ 2.00</div>
         </section>
+    </div>
+</div>
+
+<div id="cartBar" class="cart-float-bar" style="display: none;">
+    <div class="cart-info">
+        🛒 <span id="cartCount" class="cart-count">0</span>
+        <span>Total: <strong id="cartTotalBar" style="color:var(--amarillo);">S/ 0.00</strong></span>
+    </div>
+    <button class="btn-view-cart" onclick="toggleModal(true)">
+        Ver Pedido
+    </button>
+</div>
+
+<div id="cartModal" class="cart-modal">
+    <div class="cart-modal-content">
+        <div class="cart-modal-header">
+            <h3>Tu Pedido 🛒</h3>
+            <button class="close-modal" onclick="toggleModal(false)">&times;</button>
+        </div>
+        <div id="cartItemsList" class="cart-items-list">
+            </div>
+        <div class="cart-modal-footer">
+            <div class="cart-total-row">
+                <span>Total:</span>
+                <span id="cartTotalModal" style="color:var(--amarillo);">S/ 0.00</span>
+            </div>
+            <button class="btn-submit-order" onclick="sendOrderViaWhatsApp()">
+                <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Enviar Pedido por WhatsApp
+            </button>
+        </div>
     </div>
 </div>
 
@@ -242,9 +514,7 @@
     <div class="contacto-local">
         <span>Antojitos Salaverry</span>
         <a href="https://wa.me/51991194215" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
-            <svg viewBox="0 0 24 24">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-            </svg>
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             +51 991 194 215
         </a>
     </div>
@@ -256,6 +526,107 @@
         </a>
     </div>
 </footer>
+
+<script>
+    let cart = [];
+
+    function addToCart(name, price) {
+        const existingItem = cart.find(item => item.name === name);
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            cart.push({ name: name, price: price, quantity: 1 });
+        }
+        updateCartUI();
+    }
+
+    function changeQuantity(name, amount) {
+        const item = cart.find(item => item.name === name);
+        if (item) {
+            item.quantity += amount;
+            if (item.quantity <= 0) {
+                cart = cart.filter(i => i.name !== name);
+            }
+        }
+        updateCartUI();
+    }
+
+    function updateCartUI() {
+        const cartBar = document.getElementById('cartBar');
+        const cartCount = document.getElementById('cartCount');
+        const cartTotalBar = document.getElementById('cartTotalBar');
+        const cartTotalModal = document.getElementById('cartTotalModal');
+        const cartItemsList = document.getElementById('cartItemsList');
+
+        if (cart.length === 0) {
+            cartBar.style.display = 'none';
+            toggleModal(false);
+            return;
+        }
+
+        cartBar.style.display = 'flex';
+
+        let totalItems = 0;
+        let totalPrice = 0;
+        cartItemsList.innerHTML = '';
+
+        cart.forEach(item => {
+            totalItems += item.quantity;
+            const subtotal = item.price * item.quantity;
+            totalPrice += subtotal;
+
+            // Insertar elemento en el modal
+            cartItemsList.innerHTML += `
+                <div class="cart-modal-item">
+                    <div>
+                        <strong>${item.name}</strong><br>
+                        <span style="color:var(--amarillo); font-size:0.9rem;">S/ ${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="btn-qty" onclick="changeQuantity('${item.name}', -1)">-</button>
+                        <span>${item.quantity}</span>
+                        <button class="btn-qty" onclick="changeQuantity('${item.name}', 1)">+</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        cartCount.innerText = totalItems;
+        cartTotalBar.innerText = `S/ ${totalPrice.toFixed(2)}`;
+        cartTotalModal.innerText = `S/ ${totalPrice.toFixed(2)}`;
+    }
+
+    function toggleModal(show) {
+        const modal = document.getElementById('cartModal');
+        modal.style.display = show ? 'flex' : 'none';
+    }
+
+    function sendOrderViaWhatsApp() {
+        if (cart.length === 0) return;
+
+        let message = "¡Hola Antojitos Salaverry! 👋\nQuiero realizar el siguiente pedido:\n\n";
+        let total = 0;
+
+        cart.forEach(item => {
+            const subtotal = item.price * item.quantity;
+            message += `• *${item.quantity}x* ${item.name} *(S/ ${subtotal.toFixed(2)})*\n`;
+            total += subtotal;
+        });
+
+        message += `\n-------------------------\n`;
+        message += `💰 *Total a Pagar: S/ ${total.toFixed(2)}*\n-------------------------\n`;
+        message += `\n📌 _Pedido enviado desde el Menú Digital_`;
+
+        // Codificar el texto para que la URL sea válida
+        const encodedMessage = encodeURIComponent(message);
+        
+        // Número de Antojitos Salaverry
+        const whatsappUrl = `https://wa.me/51991194215?text=${encodedMessage}`;
+
+        // Abrir WhatsApp en una pestaña nueva
+        window.open(whatsappUrl, '_blank');
+    }
+</script>
 
 </body>
 </html>
