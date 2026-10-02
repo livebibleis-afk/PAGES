@@ -12,43 +12,40 @@
             padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             color: #333; line-height: 1.6;
         }
-        /* Estilos para el nuevo botón táctil */
         #btn-exportar {
-            margin-top: 10px;
-            padding: 12px 15px;
-            background-color: #007AFF; /* Azul estilo iOS */
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            box-shadow: 0 2px 5px rgba(0,122,255,0.3);
-            touch-action: manipulation; /* Optimiza el toque en pantallas táctiles */
+            margin-top: 10px; padding: 12px 15px; background-color: #007AFF; 
+            color: white; border: none; border-radius: 6px; font-size: 16px; 
+            font-weight: bold; cursor: pointer; width: 100%; 
+            box-shadow: 0 2px 5px rgba(0,122,255,0.3); touch-action: manipulation;
         }
-        #btn-exportar:active {
-            background-color: #0056b3;
-        }
+        #btn-exportar:active { background-color: #0056b3; }
     </style>
 </head>
 <body>
-    <!-- Panel de información y botón -->
     <div id="info">
         <b>Navegación 3D</b><br>
         👆 Arrastra para rotar<br>
         ✌️ Pellizca para zoom<br><br>
         <b>Exportar a Three.js Editor</b><br>
-        <!-- Aquí está el botón nuevo -->
         <button id="btn-exportar">📥 Descargar Modelo 3D</button>
     </div>
 
-    <script type="module">
-        import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
-        import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
-        import { GLTFExporter } from 'https://unpkg.com/three@0.160.0/examples/jsm/exporters/GLTFExporter.js';
+    <!-- 1. MAPA DE IMPORTACIONES (Crucial para que los módulos funcionen en la web) -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
 
-        // Configuración Básica
+    <script type="module">
+        // 2. IMPORTACIONES CORREGIDAS
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xe0e0e0);
 
@@ -64,7 +61,6 @@
         controls.enableDamping = true; 
         controls.target.set(0, 0, 0);
 
-        // Iluminación
         const luzAmbiental = new THREE.AmbientLight(0xffffff, 0.6);
         scene.add(luzAmbiental);
 
@@ -73,7 +69,6 @@
         luzSol.castShadow = true;
         scene.add(luzSol);
 
-        // Crear el Suelo
         const texturaSuelo = new THREE.GridHelper(20, 20, 0x888888, 0xcccccc);
         texturaSuelo.position.y = 0;
         scene.add(texturaSuelo);
@@ -85,11 +80,9 @@
         piso.receiveShadow = true;
         scene.add(piso);
 
-        // Grupo de la casa
         const grupoCasa = new THREE.Group();
         scene.add(grupoCasa);
 
-        // Generación de Muros
         const murosSVG = [
             [250, 300, 850, 300],   
             [250, 300, 250, 1500],  
@@ -117,17 +110,14 @@
 
         murosSVG.forEach(coords => {
             const [x1_svg, y1_svg, x2_svg, y2_svg] = coords;
-            
             const x1 = (x1_svg + offsetX) * escala;
             const z1 = (y1_svg + offsetZ) * escala;
             const x2 = (x2_svg + offsetX) * escala;
             const z2 = (y2_svg + offsetZ) * escala;
-
             const centroX = (x1 + x2) / 2;
             const centroZ = (z1 + z2) / 2;
 
             let ancho, profundidad;
-
             if (z1 === z2) { 
                 ancho = Math.abs(x2 - x1) + grosorMuro;
                 profundidad = grosorMuro;
@@ -142,11 +132,9 @@
             muro.position.set(centroX, alturaMuro / 2, centroZ);
             muro.castShadow = true;
             muro.receiveShadow = true;
-            
             grupoCasa.add(muro);
         });
 
-        // Función de Exportación a GLB
         function exportarA_GLB() {
             const exporter = new GLTFExporter();
             exporter.parse(
@@ -169,17 +157,12 @@
             );
         }
 
-        // VINCULAMOS LA FUNCIÓN AL BOTÓN TÁCTIL
         document.getElementById('btn-exportar').addEventListener('click', exportarA_GLB);
 
-        // Mantenemos también la tecla "E" por si luego usas una PC
         window.addEventListener('keydown', (event) => {
-            if (event.key.toLowerCase() === 'e') {
-                exportarA_GLB();
-            }
+            if (event.key.toLowerCase() === 'e') exportarA_GLB();
         });
 
-        // Ajuste de pantalla y animación
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
