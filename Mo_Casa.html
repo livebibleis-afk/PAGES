@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Generador de Plano 3D a GLB</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #f4f4f4; }
+        canvas { display: block; }
+        #info {
+            position: absolute; top: 15px; left: 15px;
+            font-family: Arial, sans-serif; background: rgba(255,255,255,0.95);
+            padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            color: #333; line-height: 1.6;
+        }
+        /* Estilos para el nuevo botón táctil */
+        #btn-exportar {
+            margin-top: 10px;
+            padding: 12px 15px;
+            background-color: #007AFF; /* Azul estilo iOS */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 2px 5px rgba(0,122,255,0.3);
+            touch-action: manipulation; /* Optimiza el toque en pantallas táctiles */
+        }
+        #btn-exportar:active {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <!-- Panel de información y botón -->
+    <div id="info">
+        <b>Navegación 3D</b><br>
+        👆 Arrastra para rotar<br>
+        ✌️ Pellizca para zoom<br><br>
+        <b>Exportar a Three.js Editor</b><br>
+        <!-- Aquí está el botón nuevo -->
+        <button id="btn-exportar">📥 Descargar Modelo 3D</button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+        import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+        import { GLTFExporter } from 'https://unpkg.com/three@0.160.0/examples/jsm/exporters/GLTFExporter.js';
+
+        // Configuración Básica
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xe0e0e0);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(5, 8, 8); 
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; 
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; 
+        controls.target.set(0, 0, 0);
+
+        // Iluminación
+        const luzAmbiental = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(luzAmbiental);
+
+        const luzSol = new THREE.DirectionalLight(0xffffff, 1);
+        luzSol.position.set(10, 15, 10);
+        luzSol.castShadow = true;
+        scene.add(luzSol);
+
+        // Crear el Suelo
+        const texturaSuelo = new THREE.GridHelper(20, 20, 0x888888, 0xcccccc);
+        texturaSuelo.position.y = 0;
+        scene.add(texturaSuelo);
+
+        const pisoGeometria = new THREE.PlaneGeometry(20, 20);
+        const pisoMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const piso = new THREE.Mesh(pisoGeometria, pisoMaterial);
+        piso.rotation.x = -Math.PI / 2;
+        piso.receiveShadow = true;
+        scene.add(piso);
+
+        // Grupo de la casa
+        const grupoCasa = new THREE.Group();
+        scene.add(grupoCasa);
+
+        // Generación de Muros
+        const murosSVG = [
+            [250, 300, 850, 300],   
+            [250, 300, 250, 1500],  
+            [850, 300, 850, 1500],  
+            [250, 1500, 400, 1500], 
+            [500, 1500, 850, 1500], 
+            [250, 800, 400, 800],   
+            [500, 800, 550, 800],   
+            [650, 800, 850, 800],   
+            [250, 1100, 400, 1100], 
+            [650, 1100, 850, 1100], 
+            [550, 300, 550, 800],   
+            [400, 800, 400, 900],   
+            [400, 1000, 400, 1100], 
+            [650, 800, 650, 1100]   
+        ];
+
+        const escala = 0.01;      
+        const alturaMuro = 2.5;   
+        const grosorMuro = 0.15;  
+        const offsetX = -550;     
+        const offsetZ = -900;     
+
+        const materialMuro = new THREE.MeshStandardMaterial({ color: 0xeaeaea });
+
+        murosSVG.forEach(coords => {
+            const [x1_svg, y1_svg, x2_svg, y2_svg] = coords;
+            
+            const x1 = (x1_svg + offsetX) * escala;
+            const z1 = (y1_svg + offsetZ) * escala;
+            const x2 = (x2_svg + offsetX) * escala;
+            const z2 = (y2_svg + offsetZ) * escala;
+
+            const centroX = (x1 + x2) / 2;
+            const centroZ = (z1 + z2) / 2;
+
+            let ancho, profundidad;
+
+            if (z1 === z2) { 
+                ancho = Math.abs(x2 - x1) + grosorMuro;
+                profundidad = grosorMuro;
+            } else {
+                ancho = grosorMuro;
+                profundidad = Math.abs(z2 - z1) + grosorMuro;
+            }
+
+            const geometriaMuro = new THREE.BoxGeometry(ancho, alturaMuro, profundidad);
+            const muro = new THREE.Mesh(geometriaMuro, materialMuro);
+            
+            muro.position.set(centroX, alturaMuro / 2, centroZ);
+            muro.castShadow = true;
+            muro.receiveShadow = true;
+            
+            grupoCasa.add(muro);
+        });
+
+        // Función de Exportación a GLB
+        function exportarA_GLB() {
+            const exporter = new GLTFExporter();
+            exporter.parse(
+                grupoCasa,
+                function (glb) {
+                    const blob = new Blob([glb], { type: 'application/octet-stream' });
+                    const link = document.createElement('a');
+                    link.style.display = 'none';
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'mi_plano_3d.glb';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                },
+                function (error) {
+                    console.error('Error exportando el modelo:', error);
+                    alert('Hubo un error al exportar.');
+                },
+                { binary: true } 
+            );
+        }
+
+        // VINCULAMOS LA FUNCIÓN AL BOTÓN TÁCTIL
+        document.getElementById('btn-exportar').addEventListener('click', exportarA_GLB);
+
+        // Mantenemos también la tecla "E" por si luego usas una PC
+        window.addEventListener('keydown', (event) => {
+            if (event.key.toLowerCase() === 'e') {
+                exportarA_GLB();
+            }
+        });
+
+        // Ajuste de pantalla y animación
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); 
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>
