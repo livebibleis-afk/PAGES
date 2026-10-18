@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wilson - Servicios de Construcción</title>
+    <style>
+        :root {
+            --primary: #FFA500; /* Naranja construcción */
+            --dark: #333333;
+            --light: #f4f4f9;
+            --white: #ffffff;
+            --whatsapp: #25D366;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* Cabecera */
+        header {
+            background-color: var(--dark);
+            color: var(--white);
+            text-align: center;
+            padding: 4rem 2rem;
+            border-bottom: 5px solid var(--primary);
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        /* Sección de Servicios */
+        .services {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+
+        .services h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--dark);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--white);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            border-top: 4px solid var(--primary);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Botón Flotante de WhatsApp */
+        .whatsapp-float {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            bottom: 40px;
+            right: 40px;
+            background-color: var(--whatsapp);
+            color: #FFF;
+            border-radius: 50px;
+            text-align: center;
+            font-size: 30px;
+            box-shadow: 2px 2px 3px #999;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .whatsapp-float:hover {
+            background-color: #128C7E;
+        }
+
+        .whatsapp-float svg {
+            width: 35px;
+            height: 35px;
+            fill: currentColor;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background-color: var(--dark);
+            color: var(--white);
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            header h1 { font-size: 2.2rem; }
+            .whatsapp-float { bottom: 20px; right: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Wilson</h1>
+        <p>Especialistas en Construcción Sólida y Segura</p>
+    </header>
+
+    <section class="services">
+        <h2>Nuestros Servicios</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>Enchapes</h3>
+                <p>Instalación profesional de cerámicos y porcelanatos con acabados de primera calidad y nivelación exacta.</p>
+            </div>
+            <div class="card">
+                <h3>Albañilería Confinada</h3>
+                <p>Construcción de muros y estructuras reforzadas con vigas y columnas para garantizar máxima resistencia sísmica.</p>
+            </div>
+            <div class="card">
+                <h3>Encofrados de Techos</h3>
+                <p>Armado seguro y preciso de encofrados para vaciado de techos, losas y estructuras de concreto.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Botón de WhatsApp -->
+    <!-- El enlace wa.me ya incluye tu código de país y número -->
+    <a href="https://wa.me/51942923332" class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Contactar por WhatsApp">
+        <svg viewBox="0 0 24 24">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-5.824 4.74-10.563 10.564-10.563 5.826 0 10.564 4.741 10.564 10.564 0 5.825-4.74 10.564-10.565 10.564z"/>
+        </svg>
+    </a>
+
+    <footer>
+        <p>&copy; 2026 Wilson Construcciones. Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>
