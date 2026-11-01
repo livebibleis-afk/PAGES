@@ -1,43 +1,27 @@
 name: Gemini CLI
+
 on:
   issues:
     types: [opened]
   issue_comment:
     types: [created]
 
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
 jobs:
   gemini:
     if: |
-      github.actor == github.repository_owner &&
-      ((github.event_name == 'issues' && contains(github.event.issue.body, '@gemini-cli')) ||
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@gemini-cli')))
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@gemini-cli')) ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@gemini-cli'))
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
 
-      - name: Run Gemini CLI
-        id: run_gemini
-        uses: google-github-actions/run-gemini-cli@v0.1.22
-        env:
-          GEMINI_CLI_TRUST_WORKSPACE: "true"
+      - name: Ejecutar Gemini CLI
+        uses: google-github-actions/run-gemini-cli@v0
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          prompt: ${{ github.event.comment.body || github.event.issue.body }}
-
-      - name: Publicar respuesta en el Issue
-        uses: actions/github-script@v7
-        env:
-          GEMINI_SUMMARY: ${{ steps.run_gemini.outputs.summary }}
-        with:
-          script: |
-            const summary = process.env.GEMINI_SUMMARY;
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: summary || 'Análisis completado (revisa el registro en Actions).'
-            });
