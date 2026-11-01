@@ -16,7 +16,7 @@ jobs:
     if: |
       (github.event_name == 'issues' && contains(github.event.issue.body, '@gemini-cli')) ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@gemini-cli'))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
       - name: Descargar repositorio
@@ -37,7 +37,7 @@ jobs:
             try {
               const apiKey = (process.env.GEMINI_API_KEY || "").trim();
               if (!apiKey) {
-                fs.writeFileSync("respuesta.txt", "⚠️ Error: El secret `GEMINI_API_KEY` está vacío o no se encontró en Settings > Secrets and variables > Actions.");
+                fs.writeFileSync("respuesta.txt", "⚠️ Error: El secret `GEMINI_API_KEY` está vacío.");
                 return;
               }
 
@@ -55,7 +55,7 @@ jobs:
 
               const promptText = `Eres el asistente técnico del repositorio. Responde en español a la consulta del usuario basándote en los archivos del proyecto.\n\nConsulta: ${process.env.USER_PROMPT}\n\n${context.slice(0, 30000)}`;
 
-              const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+              const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
               const res = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
