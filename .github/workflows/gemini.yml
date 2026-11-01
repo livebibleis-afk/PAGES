@@ -11,15 +11,13 @@ permissions:
   issues: write
   pull-requests: write
 
-env:
-  GEMINI_CLI_TRUST_WORKSPACE: "true"
-
 jobs:
   gemini:
     if: |
       (github.event_name == 'issues' && contains(github.event.issue.body, '@gemini-cli')) ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@gemini-cli'))
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
@@ -29,16 +27,16 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Ejecutar Gemini CLI y responder en el Issue
+      - name: Ejecutar Gemini CLI y responder
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_CLI_TRUST_WORKSPACE: "true"
+          CI: "true"
           USER_PROMPT: ${{ github.event.comment.body || github.event.issue.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           npm install -g @google/gemini-cli
-          mkdir -p ~/.gemini
-          echo '{"trustedFolders": ["'"$GITHUB_WORKSPACE"'", "/home/runner/work"]}' > ~/.gemini/trusted_folders.json
-          gemini --yolo -p "$USER_PROMPT" > respuesta.txt
+          gemini --yolo --skip-trust -p "$USER_PROMPT" < /dev/null > respuesta.txt || gemini --yolo -p "$USER_PROMPT" < /dev/null > respuesta.txt
+          cat respuesta.txt
           gh issue comment "$ISSUE_NUMBER" --body-file respuesta.txt
