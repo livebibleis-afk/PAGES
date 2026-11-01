@@ -20,7 +20,7 @@ jobs:
       (github.event_name == 'issues' && contains(github.event.issue.body, '@gemini-cli')) ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@gemini-cli'))
     runs-on: ubuntu-24.04
-    timeout-minutes: 3
+    timeout-minutes: 4
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
@@ -48,11 +48,48 @@ jobs:
             await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                chat_id: chatId,
-                text: text.slice(0, 4000)
-              })
+              body: JSON.stringify({ chat_id: chatId, text: text.slice(0, 4000) })
             });
+          }
+
+          async function callGeminiWithFallback(apiKey, promptText) {
+            // Intenta primero con el modelo más avanzado y respalda con 3.8-flash
+            const models = ["gemini-4-argon", "gemini-3.8-flash"];
+            let lastError = null;
+
+            for (const model of models) {
+              const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+              for (let attempt = 1; attempt <= 2; attempt++) {
+                try {
+                  const res = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      contents: [{ parts: [{ text: promptText }] }],
+                      generationConfig: { responseMimeType: "application/json" }
+                    })
+                  });
+
+                  const data = await res.json();
+                  if (res.ok) {
+                    return { data, modelUsed: model };
+                  }
+
+                  lastError = `(${res.status}) en ${model}: ${JSON.stringify(data)}`;
+                  // Si es 404 (modelo no habilitado en la llave) o 429 (cuota), pasar directo al siguiente modelo
+                  if (res.status === 404 || res.status === 429) break;
+
+                  // Si es 503 (sobrecarga temporal), esperar 3 segundos y reintentar
+                  if (res.status === 503 && attempt === 1) {
+                    await new Promise(r => setTimeout(r, 3000));
+                    continue;
+                  }
+                } catch (err) {
+                  lastError = err.message;
+                }
+              }
+            }
+            throw new Error(`No se pudo completar tras probar los modelos. Último error: ${lastError}`);
           }
 
           async function main() {
@@ -70,9 +107,9 @@ jobs:
                 }
               }
 
-              const systemInstruction = `Eres el ingeniero desarrollador de este repositorio. Responde siempre en español.
+              const systemInstruction = `Eres el ingeniero desarrollador principal de este repositorio. Responde siempre en español.
           Si el usuario solo hace una pregunta, respóndela en "reply" y deja "filesToUpdate" vacío [].
-          Si te pide editar, corregir o crear un archivo, incluye el código COMPLETO de cada archivo modificado en "filesToUpdate".
+          Si te pide editar, corregir o crear un archivo, incluye el código COMPLETO y funcional de cada archivo modificado en "filesToUpdate".
 
           Responde ÚNICAMENTE con un JSON válido con esta estructura:
           {
@@ -85,22 +122,10 @@ jobs:
 
               const promptText = `${systemInstruction}\n\nInstrucción del usuario: ${process.env.USER_PROMPT}\n\n${context.slice(0, 60000)}`;
 
-              const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
-              const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  contents: [{ parts: [{ text: promptText }] }],
-                  generationConfig: { responseMimeType: "application/json" }
-                })
-              });
-
-              const data = await res.json();
-              if (!res.ok) throw new Error(JSON.stringify(data));
-
+              const { data, modelUsed } = await callGeminiWithFallback(apiKey, promptText);
               const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
               const result = JSON.parse(rawText);
-              let replyMsg = result.reply || "Proceso completado.";
+              let replyMsg = `${result.reply || "Proceso completado."}\n\n🤖 _Modelo utilizado: ${modelUsed}_`;
 
               if (Array.isArray(result.filesToUpdate) && result.filesToUpdate.length > 0) {
                 const updatedList = [];
@@ -123,7 +148,7 @@ jobs:
                     execSync(`git commit -m "${msg}"`);
                     execSync("git push");
                     const sha = execSync("git rev-parse --short HEAD").toString().trim();
-                    replyMsg += `\n\n✅ Cambios publicados (Commit: ${sha})\nArchivos: ${updatedList.join(", ")}`;
+                    replyMsg += `\n✅ Cambios publicados (Commit: ${sha})\nArchivos: ${updatedList.join(", ")}`;
                   }
                 }
               }
