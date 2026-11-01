@@ -11,6 +11,9 @@ permissions:
   issues: write
   pull-requests: write
 
+env:
+  GEMINI_CLI_TRUST_WORKSPACE: "true"
+
 jobs:
   gemini:
     if: |
@@ -21,7 +24,21 @@ jobs:
       - name: Descargar repositorio
         uses: actions/checkout@v4
 
-      - name: Ejecutar Gemini CLI
-        uses: google-github-actions/run-gemini-cli@v0
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
         with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          node-version: '20'
+
+      - name: Ejecutar Gemini CLI y responder en el Issue
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_CLI_TRUST_WORKSPACE: "true"
+          USER_PROMPT: ${{ github.event.comment.body || github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          npm install -g @google/gemini-cli
+          mkdir -p ~/.gemini
+          echo '{"trustedFolders": ["'"$GITHUB_WORKSPACE"'", "/home/runner/work"]}' > ~/.gemini/trusted_folders.json
+          gemini --yolo -p "$USER_PROMPT" > respuesta.txt
+          gh issue comment "$ISSUE_NUMBER" --body-file respuesta.txt
