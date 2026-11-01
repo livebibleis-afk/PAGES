@@ -5,6 +5,8 @@ on:
     types: [opened]
   issue_comment:
     types: [created]
+  repository_dispatch:
+    types: [telegram_prompt]
 
 permissions:
   contents: write
@@ -14,6 +16,7 @@ permissions:
 jobs:
   gemini:
     if: |
+      github.event_name == 'repository_dispatch' ||
       (github.event_name == 'issues' && contains(github.event.issue.body, '@gemini-cli')) ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@gemini-cli'))
     runs-on: ubuntu-24.04
@@ -28,7 +31,10 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          USER_PROMPT: ${{ github.event.comment.body || github.event.issue.body }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          USER_PROMPT: ${{ github.event.client_payload.text || github.event.comment.body || github.event.issue.body }}
+          CHAT_ID: ${{ github.event.client_payload.chat_id }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           cat << 'EOF' > agente.mjs
@@ -36,14 +42,22 @@ jobs:
           import path from "path";
           import { execSync } from "child_process";
 
+          async function sendTelegram(chatId, text) {
+            const token = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
+            if (!token || !chatId) return;
+            await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: text.slice(0, 4000)
+              })
+            });
+          }
+
           async function main() {
             try {
               const apiKey = (process.env.GEMINI_API_KEY || "").trim();
-              if (!apiKey) {
-                fs.writeFileSync("respuesta.txt", "⚠️ Error: El secret `GEMINI_API_KEY` está vacío.");
-                return;
-              }
-
               const files = execSync("git ls-files").toString().trim().split("\n");
               let context = "Lista de archivos del repositorio:\n" + files.join("\n") + "\n\n";
 
@@ -57,18 +71,15 @@ jobs:
               }
 
               const systemInstruction = `Eres el ingeniero desarrollador de este repositorio. Responde siempre en español.
-          Si el usuario solo hace una pregunta, respóndela normalmente en "reply" y deja "filesToUpdate" como un arreglo vacío [].
-          Si el usuario te pide editar, corregir, agregar algo o crear un archivo, devuelve el código COMPLETO y funcional de cada archivo modificado dentro de "filesToUpdate". No omitas partes del archivo ni uses comentarios como "// resto del código aquí".
+          Si el usuario solo hace una pregunta, respóndela en "reply" y deja "filesToUpdate" vacío [].
+          Si te pide editar, corregir o crear un archivo, incluye el código COMPLETO de cada archivo modificado en "filesToUpdate".
 
-          Debes responder ÚNICAMENTE con un objeto JSON válido con esta estructura exacta:
+          Responde ÚNICAMENTE con un JSON válido con esta estructura:
           {
-            "reply": "Explicación clara en Markdown de la respuesta o de los cambios realizados",
-            "commitMessage": "Mensaje corto del commit (si hubo cambios)",
+            "reply": "Explicación clara de la respuesta o de los cambios realizados",
+            "commitMessage": "Mensaje corto del commit",
             "filesToUpdate": [
-              {
-                "path": "nombre_del_archivo.html",
-                "content": "contenido completo del archivo"
-              }
+              { "path": "archivo.html", "content": "código completo" }
             ]
           }`;
 
@@ -80,17 +91,12 @@ jobs:
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   contents: [{ parts: [{ text: promptText }] }],
-                  generationConfig: {
-                    responseMimeType: "application/json"
-                  }
+                  generationConfig: { responseMimeType: "application/json" }
                 })
               });
 
               const data = await res.json();
-              if (!res.ok) {
-                fs.writeFileSync("respuesta.txt", `⚠️ Error de la API de Gemini (${res.status}):\n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``);
-                return;
-              }
+              if (!res.ok) throw new Error(JSON.stringify(data));
 
               const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
               const result = JSON.parse(rawText);
@@ -110,23 +116,28 @@ jobs:
                 if (updatedList.length > 0) {
                   execSync('git config user.name "github-actions[bot]"');
                   execSync('git config user.email "41898282+github-actions[bot]@users.noreply.github.com"');
-                  for (const p of updatedList) {
-                    execSync(`git add "${p}"`);
-                  }
+                  for (const p of updatedList) execSync(`git add "${p}"`);
                   const status = execSync("git status --porcelain").toString().trim();
                   if (status) {
-                    const msg = (result.commitMessage || `Actualización automática desde Issue #${process.env.ISSUE_NUMBER}`).replace(/"/g, "'");
+                    const msg = (result.commitMessage || "Actualización vía Bot").replace(/"/g, "'");
                     execSync(`git commit -m "${msg}"`);
                     execSync("git push");
                     const sha = execSync("git rev-parse --short HEAD").toString().trim();
-                    replyMsg += `\n\n---\n✅ **Cambios guardados y publicados en el repositorio** (Commit: \`${sha}\`)\n**Archivos modificados:** ${updatedList.map(f => `\`${f}\``).join(", ")}`;
+                    replyMsg += `\n\n✅ Cambios publicados (Commit: ${sha})\nArchivos: ${updatedList.join(", ")}`;
                   }
                 }
               }
 
               fs.writeFileSync("respuesta.txt", replyMsg);
+              if (process.env.EVENT_NAME === "repository_dispatch" && process.env.CHAT_ID) {
+                await sendTelegram(process.env.CHAT_ID, replyMsg);
+              }
             } catch (err) {
-              fs.writeFileSync("respuesta.txt", `⚠️ Error interno al procesar o editar: ${err.message}`);
+              const errMsg = `⚠️ Error: ${err.message}`;
+              fs.writeFileSync("respuesta.txt", errMsg);
+              if (process.env.EVENT_NAME === "repository_dispatch" && process.env.CHAT_ID) {
+                await sendTelegram(process.env.CHAT_ID, errMsg);
+              }
             }
           }
 
@@ -135,4 +146,6 @@ jobs:
 
           node agente.mjs
           rm -f agente.mjs
-          gh issue comment "$ISSUE_NUMBER" --body-file respuesta.txt
+          if [ "$EVENT_NAME" != "repository_dispatch" ] && [ -n "$ISSUE_NUMBER" ]; then
+            gh issue comment "$ISSUE_NUMBER" --body-file respuesta.txt
+          fi
