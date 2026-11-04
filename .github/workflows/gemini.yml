@@ -20,7 +20,7 @@ jobs:
       (github.event_name == 'issues' && contains(github.event.issue.body, '@gemini-cli')) ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@gemini-cli'))
     runs-on: ubuntu-24.04
-    timeout-minutes: 4
+    timeout-minutes: 5
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
@@ -53,13 +53,18 @@ jobs:
           }
 
           async function callGeminiWithFallback(apiKey, promptText) {
-            // Intenta primero con el modelo más avanzado y respalda con 3.8-flash
-            const models = ["gemini-4-argon", "gemini-3.8-flash"];
+            // Cadena de 4 modelos para esquivar saturación (503) en servidores específicos
+            const models = [
+              "gemini-3.8-flash",
+              "gemini-2.5-flash",
+              "gemini-2.0-flash",
+              "gemini-4-argon"
+            ];
             let lastError = null;
 
             for (const model of models) {
               const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-              for (let attempt = 1; attempt <= 2; attempt++) {
+              for (let attempt = 1; attempt <= 3; attempt++) {
                 try {
                   const res = await fetch(url, {
                     method: "POST",
@@ -76,40 +81,44 @@ jobs:
                   }
 
                   lastError = `(${res.status}) en ${model}: ${JSON.stringify(data)}`;
-                  // Si es 404 (modelo no habilitado en la llave) o 429 (cuota), pasar directo al siguiente modelo
-                  if (res.status === 404 || res.status === 429) break;
+                  if (res.status === 404 || res.status === 400) break;
 
-                  // Si es 503 (sobrecarga temporal), esperar 3 segundos y reintentar
-                  if (res.status === 503 && attempt === 1) {
-                    await new Promise(r => setTimeout(r, 3000));
+                  if (res.status === 503 || res.status === 429) {
+                    await new Promise(r => setTimeout(r, attempt * 4000));
                     continue;
                   }
                 } catch (err) {
                   lastError = err.message;
+                  await new Promise(r => setTimeout(r, 3000));
                 }
               }
             }
-            throw new Error(`No se pudo completar tras probar los modelos. Último error: ${lastError}`);
+            throw new Error(`Servidores saturados tras varios intentos. Último error: ${lastError}`);
           }
 
           async function main() {
             try {
               const apiKey = (process.env.GEMINI_API_KEY || "").trim();
+              const userPrompt = process.env.USER_PROMPT || "";
+              const promptLower = userPrompt.toLowerCase();
               const files = execSync("git ls-files").toString().trim().split("\n");
-              let context = "Lista de archivos del repositorio:\n" + files.join("\n") + "\n\n";
+              let context = "Lista de archivos existentes en el repositorio:\n" + files.join("\n") + "\n\n";
 
-              for (const f of files) {
+              // Carga inteligente: solo adjunta el contenido de los archivos mencionados en la orden
+              let matchedFiles = files.filter(f => promptLower.includes(f.toLowerCase()));
+
+              for (const f of matchedFiles) {
                 if (/\.(json|html|js|ts|css|py|md|yml|yaml)$/i.test(f) && !f.includes("package-lock")) {
                   try {
-                    const content = fs.readFileSync(f, "utf8").slice(0, 15000);
-                    context += `\n--- Archivo: ${f} ---\n${content}\n`;
+                    const content = fs.readFileSync(f, "utf8").slice(0, 25000);
+                    context += `\n--- Contenido actual de ${f} ---\n${content}\n`;
                   } catch (e) {}
                 }
               }
 
               const systemInstruction = `Eres el ingeniero desarrollador principal de este repositorio. Responde siempre en español.
           Si el usuario solo hace una pregunta, respóndela en "reply" y deja "filesToUpdate" vacío [].
-          Si te pide editar, corregir o crear un archivo, incluye el código COMPLETO y funcional de cada archivo modificado en "filesToUpdate".
+          Si te pide editar, corregir o crear un archivo, incluye el código COMPLETO y funcional de cada archivo modificado o creado en "filesToUpdate".
 
           Responde ÚNICAMENTE con un JSON válido con esta estructura:
           {
@@ -120,12 +129,12 @@ jobs:
             ]
           }`;
 
-              const promptText = `${systemInstruction}\n\nInstrucción del usuario: ${process.env.USER_PROMPT}\n\n${context.slice(0, 60000)}`;
+              const promptText = `${systemInstruction}\n\nInstrucción del usuario: ${userPrompt}\n\n${context}`;
 
               const { data, modelUsed } = await callGeminiWithFallback(apiKey, promptText);
               const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
               const result = JSON.parse(rawText);
-              let replyMsg = `${result.reply || "Proceso completado."}\n\n🤖 _Modelo utilizado: ${modelUsed}_`;
+              let replyMsg = `${result.reply || "Proceso completado."}\n\n🤖 Modelo: ${modelUsed}`;
 
               if (Array.isArray(result.filesToUpdate) && result.filesToUpdate.length > 0) {
                 const updatedList = [];
