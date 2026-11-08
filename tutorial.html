@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial Definitivo HTML5 + Tailwind + JS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased">
+
+    <!-- 1. BARRA DE NAVEGACIÓN FIJA -->
+    <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <span class="w-9 h-9 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-lg">
+                    <i class="fa-brands fa-html5"></i>
+                </span>
+                <span class="font-bold text-lg tracking-tight">Master<span class="text-amber-500">HTML</span></span>
+            </div>
+            <nav class="hidden sm:flex items-center gap-6 text-sm font-medium text-slate-300">
+                <a href="#estructura" class="hover:text-amber-400 transition">1. Estructura</a>
+                <a href="#etiquetas" class="hover:text-amber-400 transition">2. Etiquetas Clave</a>
+                <a href="#privado" class="hover:text-amber-400 transition">3. Ver en Privado</a>
+                <a href="#laboratorio" class="bg-amber-500 text-slate-950 px-3.5 py-1.5 rounded-lg font-bold hover:bg-amber-400 transition">Laboratorio en Vivo</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 2. HERO PRINCIPAL -->
+    <section class="py-14 px-4 border-b border-slate-800 bg-gradient-to-b from-slate-900 to-slate-950">
+        <div class="max-w-4xl mx-auto text-center">
+            <span class="inline-block bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-4">
+                Guía Práctica Paso a Paso
+            </span>
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-4">
+                Tutorial Definitivo de <span class="text-amber-500">HTML Moderno</span>
+            </h1>
+            <p class="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-8">
+                Aprende cómo estructurar páginas profesionales, aplicar diseño adaptable con Tailwind CSS, conectar formularios a WhatsApp y previsualizar repositorios privados.
+            </p>
+            <div class="flex flex-wrap justify-center gap-3">
+                <a href="#estructura" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-3 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-list-ol"></i> Empezar Paso a Paso
+                </a>
+                <a href="#laboratorio" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-6 py-3 rounded-xl border border-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-code"></i> Probar Código en Vivo
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <main class="max-w-6xl mx-auto px-4 py-12 space-y-16">
+
+        <!-- PASO 1: LA ESTRUCTURA BASE -->
+        <section id="estructura" class="scroll-mt-20">
+            <div class="flex items-center gap-3 mb-6">
+                <span class="w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm">1</span>
+                <h2 class="text-2xl font-bold">La Plantilla Base Universal (El Esqueleto)</h2>
+            </div>
+            <p class="text-slate-400 mb-6 text-sm sm:text-base">
+                Toda página web profesional parte de estas líneas esenciales. Incluyen soporte para tildes, ajuste automático a pantallas de celular y conexión a Tailwind CSS:
+            </p>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                <div class="bg-slate-800/70 px-4 py-2.5 flex items-center justify-between text-xs text-slate-300">
+                    <span class="font-mono">index.html</span>
+                    <button onclick="copiarPlantilla()" id="btnCopiar" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 px-3 py-1 rounded-md font-semibold transition">
+                        <i class="fa-regular fa-copy mr-1"></i> Copiar Plantilla
+                    </button>
+                </div>
+                <pre id="codigoPlantilla" class="p-4 text-xs sm:text-sm font-mono text-emerald-400 overflow-x-auto leading-relaxed">&lt;!DOCTYPE html&gt;
+&lt;html lang="es"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Título de tu Proyecto&lt;/title&gt;
+    &lt;!-- Tailwind CSS para diseño inmediato --&gt;
+    &lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body class="bg-slate-100 text-slate-900"&gt;
+
+    &lt;header class="bg-slate-900 text-white p-4"&gt;
+        &lt;h1 class="text-xl font-bold"&gt;Mi Empresa&lt;/h1&gt;
+    &lt;/header&gt;
+
+    &lt;main class="max-w-4xl mx-auto p-6"&gt;
+        &lt;h2 class="text-2xl font-bold mb-2"&gt;Bienvenido&lt;/h2&gt;
+        &lt;p&gt;Contenido principal de la página.&lt;/p&gt;
+    &lt;/main&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+            </div>
+        </section>
+
+        <!-- PASO 2: DICCIONARIO DE ETIQUETAS Y CLASES -->
+        <section id="etiquetas" class="scroll-mt-20">
+            <div class="flex items-center gap-3 mb-6">
+                <span class="w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm">2</span>
+                <h2 class="text-2xl font-bold">Las 6 Piezas que Construyen Cualquier Web</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                    <div class="text-amber-500 text-xl mb-2"><i class="fa-solid fa-layer-group"></i></div>
+                    <h3 class="font-bold text-lg mb-2">1. Contenedores</h3>
+                    <p class="text-xs text-slate-400 mb-3">Organizan la página en bloques lógicos.</p>
+                    <ul class="text-xs font-mono space-y-1.5 text-slate-300">
+                        <li><span class="text-amber-400">&lt;header&gt;</span> : Barra superior</li>
+                        <li><span class="text-amber-400">&lt;section&gt;</span> : Sección temática</li>
+                        <li><span class="text-amber-400">&lt;div&gt;</span> : Caja comodín</li>
+                        <li><span class="text-amber-400">&lt;footer&gt;</span> : Pie de página</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                    <div class="text-amber-500 text-xl mb-2"><i class="fa-solid fa-heading"></i></div>
+                    <h3 class="font-bold text-lg mb-2">2. Textos y Enlaces</h3>
+                    <p class="text-xs text-slate-400 mb-3">Jerarquía de lectura y botones de navegación.</p>
+                    <ul class="text-xs font-mono space-y-1.5 text-slate-300">
+                        <li><span class="text-amber-400">&lt;h1&gt; a &lt;h3&gt;</span> : Títulos</li>
+                        <li><span class="text-amber-400">&lt;p&gt;</span> : Párrafos de texto</li>
+                        <li><span class="text-amber-400">&lt;a href="..."&gt;</span> : Enlace/Botón</li>
+                        <li><span class="text-amber-400">&lt;ul&gt; / &lt;li&gt;</span> : Listas</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                    <div class="text-amber-500 text-xl mb-2"><i class="fa-solid fa-sliders"></i></div>
+                    <h3 class="font-bold text-lg mb-2">3. Formularios</h3>
+                    <p class="text-xs text-slate-400 mb-3">Capturan datos del cliente para cotizar.</p>
+                    <ul class="text-xs font-mono space-y-1.5 text-slate-300">
+                        <li><span class="text-amber-400">&lt;form&gt;</span> : Bloque de envío</li>
+                        <li><span class="text-amber-400">&lt;input&gt;</span> : Caja de texto/número</li>
+                        <li><span class="text-amber-400">&lt;select&gt;</span> : Lista desplegable</li>
+                        <li><span class="text-amber-400">&lt;button&gt;</span> : Botón de acción</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- PASO 3: CÓMO VISUALIZAR REPOSITORIOS PRIVADOS -->
+        <section id="privado" class="scroll-mt-20">
+            <div class="flex items-center gap-3 mb-6">
+                <span class="w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm">3</span>
+                <h2 class="text-2xl font-bold">Cómo Ver tu HTML en un Repositorio Privado sin Publicarlo</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-slate-900/70 border border-amber-500/30 p-6 rounded-2xl">
+                    <span class="text-xs font-bold uppercase text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded">Opción A (Automática)</span>
+                    <h3 class="font-bold text-lg mt-3 mb-2">Vercel / Cloudflare</h3>
+                    <p class="text-sm text-slate-400">
+                        Conecta tu cuenta de GitHub en <strong>vercel.com</strong> e importa tu repositorio privado (ej. <code>E3LT27_01</code>). Te da una URL privada gratuita que se actualiza en cada commit sin hacer público el repositorio.
+                    </p>
+                </div>
+
+                <div class="bg-slate-900/70 border border-slate-800 p-6 rounded-2xl">
+                    <span class="text-xs font-bold uppercase text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded">Opción B (En iPhone)</span>
+                    <h3 class="font-bold text-lg mt-3 mb-2">Descarga Raw / Archivos</h3>
+                    <p class="text-sm text-slate-400">
+                        Entra al archivo <code>.html</code> en GitHub, toca los 3 puntos <code>...</code> arriba a la derecha y elige <strong>Download</strong>. Ábrelo desde la app <strong>Archivos</strong> de iOS para verlo funcionar localmente.
+                    </p>
+                </div>
+
+                <div class="bg-slate-900/70 border border-slate-800 p-6 rounded-2xl">
+                    <span class="text-xs font-bold uppercase text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded">Opción C (En Navegador)</span>
+                    <h3 class="font-bold text-lg mt-3 mb-2">Editor GitHub.dev</h3>
+                    <p class="text-sm text-slate-400">
+                        Cambia <code>github.com</code> por <code>github.dev</code> en la barra de direcciones de tu repositorio privado para abrir VS Code Web con previsualización instantánea.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PASO 4: LABORATORIO EN VIVO -->
+        <section id="laboratorio" class="scroll-mt-20">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm">4</span>
+                <h2 class="text-2xl font-bold">Laboratorio HTML en Vivo (Edita y mira el resultado)</h2>
+            </div>
+            <p class="text-slate-400 text-sm mb-6">
+                Escribe o modifica cualquier código HTML en el cuadro izquierdo y mira cómo se transforma en tiempo real en la pantalla derecha:
+            </p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Editor -->
+                <div class="flex flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                    <div class="bg-slate-800 px-4 py-2.5 text-xs font-mono text-slate-300 flex justify-between items-center">
+                        <span><i class="fa-solid fa-pen-to-square text-amber-400 mr-1.5"></i> Editor HTML + Tailwind</span>
+                        <button onclick="resetearEditor()" class="text-amber-400 hover:underline">Restaurar ejemplo</button>
+                    </div>
+                    <textarea id="editorCodigo" oninput="actualizarVista()" rows="12" class="w-full bg-slate-950 text-emerald-400 font-mono text-xs sm:text-sm p-4 focus:outline-none resize-y"></textarea>
+                </div>
+
+                <!-- Vista Previa Renderizada -->
+                <div class="flex flex-col bg-white text-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-xl">
+                    <div class="bg-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-700 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        <span class="ml-2">Resultado en Pantalla en Tiempo Real</span>
+                    </div>
+                    <div id="vistaPrevia" class="p-6 flex-1 min-h-[260px]"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="border-t border-slate-800 bg-slate-900 py-8 text-center text-xs text-slate-500">
+        <p>Tutorial Interactivo HTML5 + Tailwind CSS • Listo para usar en tus repositorios de GitHub</p>
+    </footer>
+
+    <script>
+        const ejemploInicial = `<div class="p-5 bg-slate-900 text-white rounded-2xl shadow-lg border-t-4 border-amber-500">
+  <span class="text-xs font-bold uppercase text-amber-400">Tarjeta de Prueba</span>
+  <h3 class="text-xl font-bold mt-1 mb-2">Proyecto E3LT27_01</h3>
+  <p class="text-sm text-slate-300 mb-4">
+    Cambia este texto o los colores en el editor para ver cómo responde al instante.
+  </p>
+  <a href="https://wa.me/51971301167" target="_blank" class="inline-block bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-4 py-2.5 rounded-lg">
+    Probar Botón de WhatsApp
+  </a>
+</div>`;
+
+        function actualizarVista() {
+            const codigo = document.getElementById('editorCodigo').value;
+            document.getElementById('vistaPrevia').innerHTML = codigo;
+        }
+
+        function resetearEditor() {
+            document.getElementById('editorCodigo').value = ejemploInicial;
+            actualizarVista();
+        }
+
+        function copiarPlantilla() {
+            const texto = document.getElementById('codigoPlantilla').innerText;
+            navigator.clipboard.writeText(texto);
+            const btn = document.getElementById('btnCopiar');
+            btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> ¡Copiado!';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-regular fa-copy mr-1"></i> Copiar Plantilla';
+            }, 2000);
+        }
+
+        // Inicializar laboratorio al cargar
+        resetearEditor();
+    </script>
+</body>
+</html>
