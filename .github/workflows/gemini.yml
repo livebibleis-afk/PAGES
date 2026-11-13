@@ -75,9 +75,8 @@ jobs:
           async function callGeminiWithFallback(apiKey, promptText) {
             const models = [
               "gemini-2.5-flash",
-              "gemini-2.0-flash",
               "gemini-2.5-pro",
-              "gemini-1.5-flash"
+              "gemini-2.5-flash-lite"
             ];
             let lastError = null;
 
@@ -85,7 +84,7 @@ jobs:
               const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
               for (let attempt = 1; attempt <= 2; attempt++) {
                 const controller = new AbortController();
-                const timer = setTimeout(() => controller.abort(), 240000); // 4 min máx por intento
+                const timer = setTimeout(() => controller.abort(), 240000);
                 try {
                   const res = await fetch(url, {
                     method: "POST",
@@ -93,7 +92,11 @@ jobs:
                     signal: controller.signal,
                     body: JSON.stringify({
                       contents: [{ parts: [{ text: promptText }] }],
-                      generationConfig: { responseMimeType: "application/json" }
+                      generationConfig: {
+                        responseMimeType: "application/json",
+                        maxOutputTokens: 65536,
+                        temperature: 0.2
+                      }
                     })
                   });
                   clearTimeout(timer);
@@ -118,28 +121,56 @@ jobs:
             throw new Error(`Servidores saturados tras varios intentos. Último error: ${lastError}`);
           }
 
+          function parseSafeJSON(rawText) {
+            const cleaned = rawText
+              .replace(/^```json\s*/i, "")
+              .replace(/^```\s*/i, "")
+              .replace(/\s*```$/, "")
+              .trim();
+            return JSON.parse(cleaned);
+          }
+
           async function main() {
             try {
               const apiKey = (process.env.GEMINI_API_KEY || "").trim();
               const userPrompt = process.env.USER_PROMPT || "";
               const promptLower = userPrompt.toLowerCase();
-              const files = execSync("git ls-files").toString().trim().split("\n").filter(Boolean);
-              let context = "Lista de archivos existentes en el repositorio:\n" + (files.length ? files.join("\n") : "(Repositorio vacío)") + "\n\n";
 
-              let matchedFiles = files.filter(f => promptLower.includes(f.toLowerCase()));
+              const allFiles = execSync("git ls-files").toString().trim().split("\n").filter(Boolean);
+              const readableFiles = allFiles.filter(f =>
+                /\.(json|html|js|ts|css|py|md|yml|yaml|svg)$/i.test(f) &&
+                !f.includes("package-lock") &&
+                !f.startsWith(".github/")
+              );
+
+              let context = "Lista de archivos existentes en el repositorio:\n" + (allFiles.length ? allFiles.join("\n") : "(Repositorio vacío)") + "\n\n";
+
+              // 1. Coincidencia flexible: por ruta completa O solo por nombre de archivo (ej. "index.html" aunque esté en carpeta)
+              let matchedFiles = readableFiles.filter(f => {
+                const fullLower = f.toLowerCase();
+                const baseLower = path.basename(f).toLowerCase();
+                return promptLower.includes(fullLower) || promptLower.includes(baseLower);
+              });
+
+              // 2. Fallback automático: si no nombró un archivo exacto en el mensaje, carga los archivos principales (.html, .svg, .js) automáticamente
+              if (matchedFiles.length === 0) {
+                matchedFiles = readableFiles.slice(0, 6);
+              }
+
+              console.log("Archivos cargados en el contexto de Gemini:", matchedFiles);
 
               for (const f of matchedFiles) {
-                if (/\.(json|html|js|ts|css|py|md|yml|yaml|svg)$/i.test(f) && !f.includes("package-lock")) {
-                  try {
-                    // Soporta archivos grandes de hasta 120,000 caracteres (como planos SVG/BIM 3D)
-                    const content = fs.readFileSync(f, "utf8").slice(0, 120000);
-                    context += `\n--- Contenido actual de ${f} ---\n${content}\n`;
-                  } catch (e) {}
+                try {
+                  const content = fs.readFileSync(f, "utf8").slice(0, 250000);
+                  context += `\n--- Contenido actual de ${f} ---\n${content}\n`;
+                } catch (e) {
+                  console.error(`Error leyendo ${f}:`, e.message);
                 }
               }
 
-              const systemInstruction = `Eres el ingeniero desarrollador principal de este repositorio. Responde siempre en español.
-          Si el usuario solo hace una pregunta, respóndela en "reply" y deja "filesToUpdate" vacío [].
+              const systemInstruction = `Eres el ingeniero desarrollador principal de este repositorio (especialista en visores SVG-CAD 2D/3D con HTML, Tailwind CSS y Three.js). Responde siempre en español.
+          Tienes el contenido completo de los archivos del repositorio debajo de esta instrucción.
+          Si el usuario solo hace una pregunta o pide analizar un archivo, respóndela detalladamente en "reply" y deja "filesToUpdate" vacío [].
           Si te pide editar, corregir o crear un archivo, incluye el código COMPLETO y funcional de cada archivo modificado o creado en "filesToUpdate".
 
           Responde ÚNICAMENTE con un JSON válido con esta estructura:
@@ -155,8 +186,8 @@ jobs:
 
               const { data, modelUsed } = await callGeminiWithFallback(apiKey, promptText);
               const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-              const result = JSON.parse(rawText);
-              let replyMsg = `${result.reply || "Proceso completado."}\n\n🤖 Modelo: ${modelUsed}`;
+              const result = parseSafeJSON(rawText);
+              let replyMsg = `${result.reply || "Proceso completado."}\n\n📂 Archivos leídos: ${matchedFiles.join(", ") || "Ninguno"}\n🤖 Modelo: ${modelUsed}`;
               const updatedList = [];
 
               if (Array.isArray(result.filesToUpdate) && result.filesToUpdate.length > 0) {
@@ -179,7 +210,7 @@ jobs:
                     execSync(`git commit -m "${msg}"`);
                     execSync("git push");
                     const sha = execSync("git rev-parse --short HEAD").toString().trim();
-                    replyMsg += `\n✅ Cambios publicados (Commit: ${sha})\nArchivos: ${updatedList.join(", ")}`;
+                    replyMsg += `\n✅ Cambios publicados (Commit: ${sha})\nArchivos editados: ${updatedList.join(", ")}`;
                   }
                 }
               }
