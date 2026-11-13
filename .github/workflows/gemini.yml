@@ -72,12 +72,35 @@ jobs:
             } catch (e) {}
           }
 
-          async function callGeminiWithFallback(apiKey, promptText) {
-            const models = [
-              "gemini-2.5-flash",
-              "gemini-2.5-pro",
-              "gemini-2.5-flash-lite"
+          async function getAvailableModels(apiKey) {
+            // Lista prioritaria con los nuevos modelos 3.5 / 3.x y los alias 'latest' que nunca caducan
+            const preferred = [
+              "gemini-3.5-flash-lite",
+              "gemini-flash-latest",
+              "gemini-flash-lite-latest",
+              "gemini-3-flash-preview",
+              "gemini-3.1-pro-preview",
+              "gemini-2.5-flash"
             ];
+            try {
+              const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+              if (!res.ok) return preferred;
+              const data = await res.json();
+              const available = (data.models || [])
+                .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
+                .map(m => m.name.replace(/^models\//, ""));
+
+              // Ordena primero los preferidos que existan en tu cuenta, y luego cualquier otro gemini disponible
+              const validPreferred = preferred.filter(m => available.includes(m));
+              const others = available.filter(m => m.startsWith("gemini-") && !validPreferred.includes(m) && !m.includes("tts") && !m.includes("image") && !m.includes("embedding"));
+              return [...validPreferred, ...others];
+            } catch (e) {
+              return preferred;
+            }
+          }
+
+          async function callGeminiWithFallback(apiKey, promptText) {
+            const models = await getAvailableModels(apiKey);
             let lastError = null;
 
             for (const model of models) {
@@ -94,7 +117,6 @@ jobs:
                       contents: [{ parts: [{ text: promptText }] }],
                       generationConfig: {
                         responseMimeType: "application/json",
-                        maxOutputTokens: 65536,
                         temperature: 0.2
                       }
                     })
@@ -145,27 +167,21 @@ jobs:
 
               let context = "Lista de archivos existentes en el repositorio:\n" + (allFiles.length ? allFiles.join("\n") : "(Repositorio vacío)") + "\n\n";
 
-              // 1. Coincidencia flexible: por ruta completa O solo por nombre de archivo (ej. "index.html" aunque esté en carpeta)
               let matchedFiles = readableFiles.filter(f => {
                 const fullLower = f.toLowerCase();
                 const baseLower = path.basename(f).toLowerCase();
                 return promptLower.includes(fullLower) || promptLower.includes(baseLower);
               });
 
-              // 2. Fallback automático: si no nombró un archivo exacto en el mensaje, carga los archivos principales (.html, .svg, .js) automáticamente
               if (matchedFiles.length === 0) {
                 matchedFiles = readableFiles.slice(0, 6);
               }
 
-              console.log("Archivos cargados en el contexto de Gemini:", matchedFiles);
-
               for (const f of matchedFiles) {
                 try {
-                  const content = fs.readFileSync(f, "utf8").slice(0, 250000);
+                  const content = fs.readFileSync(f, "utf8").slice(0, 200000);
                   context += `\n--- Contenido actual de ${f} ---\n${content}\n`;
-                } catch (e) {
-                  console.error(`Error leyendo ${f}:`, e.message);
-                }
+                } catch (e) {}
               }
 
               const systemInstruction = `Eres el ingeniero desarrollador principal de este repositorio (especialista en visores SVG-CAD 2D/3D con HTML, Tailwind CSS y Three.js). Responde siempre en español.
