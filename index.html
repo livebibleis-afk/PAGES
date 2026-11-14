@@ -1,15 +1,27 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth dark">
+<html lang="es" class="h-full">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Exel | Agencia de Diseño y Desarrollo Web a Medida</title>
-  <meta name="description" content="Diseño y creación de páginas web modernas, rápidas y optimizadas para negocios, empresas y profesionales independientes. Landing pages, menús digitales y herramientas a medida." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Biblia Interactiva Pro | Visor y Estudio Bíblico</title>
+  <meta name="description" content="Visor bíblico multiversión de alta velocidad con modo claro/oscuro, soporte offline y herramientas de estudio avanzadas." />
+
+  <!-- PWA & Metadatos iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Biblia Pro" />
+  <link rel="apple-touch-icon" href="assets/icon.png" />
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Biblia Interactiva Pro" />
+  <meta property="og:description" content="Visor bíblico multiversión offline y de alta velocidad." />
+  <meta property="og:type" content="website" />
 
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -21,458 +33,213 @@
       darkMode: 'class',
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
           colors: {
             brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              400: '#818cf8',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
-              900: '#1e1b4b',
-              950: '#0b0f19'
-            },
-            accent: {
-              cyan: '#06b6d4',
-              emerald: '#10b981',
-              amber: '#f59e0b'
+              50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#1e1b4b', 950: '#0b0f19'
             }
           }
         }
       }
     };
   </script>
-  <style>
-    body {
-      background-color: #070a13;
-      color: #e2e8f0;
-      font-family: 'Inter', sans-serif;
-    }
-    .glow-effect {
-      box-shadow: 0 0 50px -10px rgba(99, 102, 241, 0.25);
-    }
-    .card-hover {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .card-hover:hover {
-      transform: translateY(-6px);
-      border-color: rgba(99, 102, 241, 0.5);
-      box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5), 0 0 25px -5px rgba(99, 102, 241, 0.2);
-    }
-  </style>
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body class="bg-[#070a13] text-slate-100 antialiased selection:bg-indigo-600 selection:text-white min-h-screen flex flex-col">
+<body class="bg-slate-50 dark:bg-[#070a13] text-slate-800 dark:text-slate-100 antialiased h-full flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
 
-  <!-- Luces ambientales de fondo -->
-  <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-    <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[450px] bg-gradient-to-tr from-indigo-600/20 to-cyan-500/15 rounded-full blur-[130px]"></div>
-    <div class="absolute top-1/2 -right-40 w-[450px] h-[450px] bg-indigo-500/10 rounded-full blur-[140px]"></div>
-    <div class="absolute bottom-10 -left-40 w-[450px] h-[450px] bg-cyan-600/10 rounded-full blur-[140px]"></div>
-  </div>
+  <!-- Barra de Progreso de Lectura -->
+  <div id="reading-progress" class="fixed top-0 left-0 h-1 bg-indigo-500 z-50 transition-all duration-150" style="width: 0%"></div>
 
-  <!-- Navegación -->
-  <header class="sticky top-0 z-50 backdrop-blur-xl bg-[#070a13]/80 border-b border-white/5">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-20">
-        
-        <!-- Logotipo -->
-        <a href="#" class="flex items-center gap-3 group">
-          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 p-[1.5px] shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-            <div class="w-full h-full bg-[#0d1222] rounded-[10px] flex items-center justify-center">
-              <i class="fa-solid fa-code text-indigo-400 group-hover:text-cyan-300 transition-colors"></i>
-            </div>
+  <!-- Header Enriquecido y Ergonómico -->
+  <header class="sticky top-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-[#070a13]/80 border-b border-slate-200 dark:border-white/10 pt-[env(safe-area-inset-top)]">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      
+      <!-- Navegación Izquierda -->
+      <div class="flex items-center gap-3">
+        <button id="btn-back" class="hidden w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors" aria-label="Volver">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <div class="flex flex-col">
+          <span id="header-title" class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
+            Santa Biblia
+          </span>
+          <!-- Barra de contexto interactiva -->
+          <div class="flex items-center gap-2">
+            <select id="select-version" class="version-select text-xs font-semibold bg-transparent text-indigo-600 dark:text-indigo-400 focus:outline-none cursor-pointer py-0.5" aria-label="Seleccionar versión bíblica">
+              <option value="rvr1909" class="dark:bg-[#070a13]">Reina-Valera 1909</option>
+              <option value="SpanishReinaValera1960Bible" class="dark:bg-[#070a13]">RVR 1960</option>
+              <option value="SpanishNVI" class="dark:bg-[#070a13]">Nueva Versión Internacional (NVI)</option>
+              <option value="SpanishTLA" class="dark:bg-[#070a13]">Traducción en Lenguaje Actual (TLA)</option>
+              <option value="SpanishLBLA" class="dark:bg-[#070a13]">La Biblia de las Américas (LBLA)</option>
+              <option value="SpanishDHH" class="dark:bg-[#070a13]">Dios Habla Hoy (DHH)</option>
+            </select>
+            <span class="text-slate-400 text-xs">•</span>
+            <span id="current-reference-badge" class="text-xs font-medium text-slate-500 dark:text-slate-400 truncate max-w-[120px] sm:max-w-xs">Selecciona un libro</span>
           </div>
-          <div class="flex flex-col">
-            <span class="text-xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
-              EXEL<span class="text-indigo-400">.</span>
-            </span>
-            <span class="text-[10px] uppercase font-bold tracking-widest text-slate-400">Digital Studio</span>
-          </div>
-        </a>
-
-        <!-- Enlaces escritorio -->
-        <nav class="hidden md:flex items-center gap-8">
-          <a href="#servicios" class="text-sm font-medium text-slate-300 hover:text-white transition-colors">Servicios</a>
-          <a href="#beneficios" class="text-sm font-medium text-slate-300 hover:text-white transition-colors">Beneficios</a>
-          <a href="#proceso" class="text-sm font-medium text-slate-300 hover:text-white transition-colors">Cómo Trabajo</a>
-          <a href="#contacto" class="text-sm font-medium text-slate-300 hover:text-white transition-colors">Contacto</a>
-        </nav>
-
-        <!-- Botón CTA WhatsApp Navbar -->
-        <div class="flex items-center gap-3">
-          <a href="https://wa.me/51938683659?text=Hola%20Exel,%20deseo%20cotizar%20un%20proyecto%20web" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 transition-all shadow-md shadow-indigo-600/25 border border-indigo-400/30 hover:scale-[1.02]">
-            <i class="fa-brands fa-whatsapp text-emerald-400 text-base"></i>
-            <span>Cotizar Proyecto</span>
-          </a>
         </div>
       </div>
+
+      <!-- Barra de herramientas de lectura (.header-actions) -->
+      <div class="flex items-center gap-1.5 sm:gap-2 header-actions">
+        <button id="btn-search-global" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors" aria-label="Buscar en toda la Biblia" title="Buscar versículos">
+          <i class="fa-solid fa-magnifying-glass text-sm"></i>
+        </button>
+        
+        <!-- Botón Tipografía con Popover -->
+        <div class="relative">
+          <button id="btn-font-settings" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors font-bold text-xs" aria-label="Ajustes de texto" title="Tamaño de fuente">
+            Aa
+          </button>
+          <!-- Popover Tipográfico -->
+          <div id="popover-font" class="hidden absolute right-0 mt-2 w-64 p-4 bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-50 space-y-4">
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tamaño de Letra</label>
+              <div class="flex items-center gap-2">
+                <button id="font-decrease" class="flex-1 py-2 bg-slate-100 dark:bg-white/5 rounded-xl font-bold text-sm hover:bg-slate-200 dark:hover:bg-white/10">A-</button>
+                <span id="font-size-display" class="text-xs font-semibold px-2">100%</span>
+                <button id="font-increase" class="flex-1 py-2 bg-slate-100 dark:bg-white/5 rounded-xl font-bold text-sm hover:bg-slate-200 dark:hover:bg-white/10">A+</button>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Interlineado</label>
+              <div class="flex items-center gap-2">
+                <button data-line="relaxed" class="line-btn flex-1 py-1.5 bg-slate-100 dark:bg-white/5 rounded-xl text-xs font-medium hover:bg-slate-200 dark:hover:bg-white/10">Normal</button>
+                <button data-line="loose" class="line-btn flex-1 py-1.5 bg-slate-100 dark:bg-white/5 rounded-xl text-xs font-medium hover:bg-slate-200 dark:hover:bg-white/10">Amplio</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-bookmarks" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors" aria-label="Versículos guardados" title="Marcadores">
+          <i class="fa-solid fa-bookmark text-sm"></i>
+        </button>
+
+        <button id="btn-theme" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors" aria-label="Cambiar tema" title="Cambiar tema">
+          <i class="fa-solid fa-moon text-sm dark:hidden"></i>
+          <i class="fa-solid fa-sun text-sm hidden dark:block"></i>
+        </button>
+      </div>
+
     </div>
   </header>
 
-  <main class="flex-grow">
-    <!-- 1. Hero Principal -->
-    <section class="relative pt-16 sm:pt-24 pb-20 lg:pb-32 overflow-hidden">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl mx-auto text-center space-y-8">
-          
-          <!-- Badge -->
-          <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-slate-300 text-xs sm:text-sm font-medium backdrop-blur-md">
-            <span class="relative flex h-2 w-2">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span>Diseño & Desarrollo Web a Medida</span>
+  <!-- Contenido Principal -->
+  <main class="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 pb-24">
+    
+    <!-- Vista de Libros y Capítulos -->
+    <section id="view-books" class="space-y-6">
+      <!-- Tarjeta Continuar Leyendo -->
+      <div id="continue-reading-card" class="hidden bg-gradient-to-r from-indigo-900/40 via-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-2xl p-5 shadow-xl flex items-center justify-between cursor-pointer hover:border-indigo-400 transition-all group">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+            <i class="fa-solid fa-clock-rotate-left"></i> Continuar leyendo
           </div>
-
-          <!-- Título Hero -->
-          <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.12]">
-            Páginas web modernas, rápidas y que <span class="bg-gradient-to-r from-indigo-400 via-cyan-400 to-teal-300 bg-clip-text text-transparent">generan ventas</span>
-          </h1>
-
-          <!-- Subtítulo -->
-          <p class="text-lg sm:text-xl text-slate-300 font-normal leading-relaxed max-w-2xl mx-auto">
-            Impulso la presencia digital de negocios, empresas y profesionales independientes con soluciones web ultra veloces, adaptadas a teléfonos móviles y optimizadas para captar clientes de forma constante.
-          </p>
-
-          <!-- Botones de Acción -->
-          <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <a href="https://wa.me/51938683659?text=Hola%20Exel,%20quiero%20hacer%20crecer%20mi%20negocio%20con%20una%20nueva%20p%C3%A1gina%20web" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-base text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 transition-all shadow-lg shadow-emerald-500/25 hover:-translate-y-0.5">
-              <i class="fa-brands fa-whatsapp text-xl"></i>
-              <span>Escríbeme por WhatsApp</span>
-            </a>
-            <a href="#servicios" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-base text-slate-200 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 transition-all">
-              <span>Conocer Servicios</span>
-              <i class="fa-solid fa-arrow-down text-xs text-indigo-400"></i>
-            </a>
-          </div>
-
-          <!-- Características Rápidas -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-10 border-t border-white/5 text-slate-400 text-xs sm:text-sm font-medium">
-            <div class="flex items-center justify-center gap-2">
-              <i class="fa-solid fa-bolt text-amber-400"></i>
-              <span>Carga Ultra Veloz</span>
-            </div>
-            <div class="flex items-center justify-center gap-2">
-              <i class="fa-solid fa-mobile-screen-button text-cyan-400"></i>
-              <span>100% Celulares</span>
-            </div>
-            <div class="flex items-center justify-center gap-2">
-              <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-              <span>Diseño Seguro & Confiable</span>
-            </div>
-            <div class="flex items-center justify-center gap-2">
-              <i class="fa-solid fa-headset text-indigo-400"></i>
-              <span>Trato Directo Sin Intermediarios</span>
-            </div>
-          </div>
-
+          <h3 id="continue-title" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-indigo-300 transition-colors">Génesis 1</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Retoma tu lectura exactamente donde la dejaste</p>
         </div>
+        <div class="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+          <i class="fa-solid fa-arrow-right"></i>
+        </div>
+      </div>
+
+      <!-- Pestañas de Testamentos con Conteo -->
+      <div class="flex gap-2 p-1 bg-slate-200/60 dark:bg-white/5 rounded-2xl border border-slate-300/50 dark:border-white/5">
+        <button id="tab-ot" class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm transition-all">
+          Antiguo Testamento (<span id="count-ot">39</span>)
+        </button>
+        <button id="tab-nt" class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
+          Nuevo Testamento (<span id="count-nt">27</span>)
+        </button>
+      </div>
+
+      <!-- Grid de Libros -->
+      <div id="books-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <!-- Dinámico desde JS -->
       </div>
     </section>
 
-    <!-- 2. Servicios que Ofrezco -->
-    <section id="servicios" class="py-20 bg-white/[0.01] border-y border-white/5 relative">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div class="text-center max-w-2xl mx-auto mb-16 space-y-4">
-          <span class="text-xs font-bold uppercase tracking-widest text-indigo-400">Catálogo de Soluciones</span>
-          <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Servicios diseñados para tu crecimiento</h2>
-          <p class="text-slate-400 text-sm sm:text-base">
-            Cada proyecto se construye con código limpio, arquitectura ligera y enfoque comercial para superar a tu competencia.
-          </p>
-        </div>
+    <!-- Vista de Versículos -->
+    <section id="view-verses" class="hidden space-y-6">
+      <!-- Cabecera de capítulo -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
+        <h2 id="verses-chapter-title" class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white"></h2>
+        <button id="btn-audio" class="px-4 py-2 rounded-xl bg-indigo-50 dark:bg-white/5 border border-indigo-200 dark:border-white/10 text-indigo-600 dark:text-indigo-400 font-semibold text-xs flex items-center gap-2 hover:bg-indigo-100 transition-colors">
+          <i class="fa-solid fa-volume-high"></i>
+          <span>Escuchar</span>
+        </button>
+      </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          
-          <!-- Servicio 1: Landing Pages -->
-          <div class="card-hover bg-[#0c1222]/90 border border-white/10 rounded-2xl p-8 relative overflow-hidden flex flex-col justify-between">
-            <div class="space-y-4">
-              <div class="w-14 h-14 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-2xl mb-6">
-                <i class="fa-solid fa-bullseye"></i>
-              </div>
-              <h3 class="text-2xl font-bold text-white">Landing Pages de Alta Conversión</h3>
-              <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-                Páginas de aterrizaje estratégicas pensadas para abogados, consultores, contratistas y empresas que buscan generar llamadas, leads y cotizaciones inmediatas.
-              </p>
-              <ul class="space-y-2 pt-2 text-sm text-slate-400">
-                <li class="flex items-center gap-2">
-                  <i class="fa-solid fa-check text-emerald-400 text-xs"></i> Redacción enfocada en beneficios y confianza
-                </li>
-                <li class="flex items-center gap-2">
-                  <i class="fa-solid fa-check text-emerald-400 text-xs"></i> Integración directa con botones de WhatsApp
-                </li>
-                <li class="flex items-center gap-2">
-                  <i class="fa-solid fa-check text-emerald-400 text-xs"></i> Adaptación perfecta a anuncios de Google & Meta
-                </li>
-              </ul>
-            </div>
-            <div class="pt-6 mt-6 border-t border-white/5 flex items-center justify-between">
-              <span class="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Enfocado en Resultados</span>
-              <a href="https://wa.me/51938683659?text=Hola%20Exel,%20deseo%20cotizar%20una%20Landing%20Page%20de%20alta%20conversi%C3%B3n" target="_blank" class="text-sm font-bold text-white hover:text-indigo-300 inline-flex items-center gap-1.5 transition-colors">
-                <span>Cotizar ahora</span>
-                <i class="fa-solid fa-arrow-right text-xs"></i>
-              </a>
-            </div>
-          </div>
+      <!-- Contenedor de Versículos -->
+      <div id="verses-container" class="space-y-4 text-lg leading-relaxed font-sans">
+        <!-- Dinámico -->
+      </div>
 
-          <!-- Servicio 2: Tarjetas de Presentación Digitales -->
-          <div class="card-hover bg-[#0c1222]/90 border border-white/10 rounded-2xl p-8 relative overflow-hidden flex flex-col justify-between">
-            <div class="space-y-4">
-              <div class="w-14 h-14 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-2xl mb-6">
-                <i class="fa-solid fa-qrcode"></i>
-              </div>
-              <h3 class="text-2xl font-bold text-white">Tarjetas de Presentación Digitales con QR</h3>
-              <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-                Lleva tu networking al siguiente nivel con una tarjeta digital interactiva lista para ser escaneada, compatible con cualquier smartphone y adaptable para impresión.
-              </p>
-              <ul class="space-y-2 pt-2 text-sm text-slate-400">
-                <li class="flex items-center gap-2">
-                  <i class="fa-solid fa-check text-cyan-400 text-xs"></i> Acceso instantáneo a llamadas, WhatsApp y redes
-                </li>
-                <li class="flex items-center gap-2">
-                  <i class="fa-solid fa-check text-cyan-400 text-xs"></i> Formato de impresión estándar internacional (PVC / Papel)
-                </li>
-                <li class="flex items-center gap-2">
-                  <i class="fa-solid fa-check text-cyan-400 text-xs"></i> Actualización ágil de datos de contacto sin reimprimir
-                </li>
-              </ul>
-            </div>
-            <div class="pt-6 mt-6 border-t border-white/5 flex items-center justify-between">
-              <span class="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Branding Profesional</span>
-              <a href="https://wa.me/51938683659?text=Hola%20Exel,%20deseo%20cotizar%20una%20Tarjeta%20de%20Presentaci%C3%B3n%20Digital" target="_blank" class="text-sm font-bold text-white hover:text-cyan-300 inline-flex items-center gap-1.5 transition-colors">
-                <span>Cotizar ahora</span>
-                <i class="fa-solid fa-arrow-right text-xs"></i>
-              </a>
-            </div>
-          </div>
-
-          <!-- Servicio 3: Menús Digitales Gastronómicos -->
-          <div class="card-hover bg-[#0c1222]/90 border border-white/10 rounded-2xl p-8 relative overflow-hidden flex flex-col justify-between">
-            <div class="space-y-4">
-              <div class="w-14 h-14 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-2xl mb-6">
-                <i class="fa-solid fa-utensils"></i>
-              </div>
-              <h3 class="text-2xl font-bold text-white">Menús Digitales & Catálogos para Restaurantes</h3>
-              <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-                Sistemas de menús interactivos donde tus clientes eligen sus platos favoritos, calculan su cuenta y envían su pedido directo al WhatsApp de tu negocio sin comisiones.
-              </p>
-              <ul class="space-y-2 pt-2 text-sm text-slate-400">
-                <li class="flex items-center gap-2">
-                  <i class="fa-solid fa-check text-amber-400 text-xs"></i> Carrito de compras intuitivo para delivery o mesa
-                </li>
-                <li class="flex items-center gap-2">
-                  <i class="fa-solid fa-check text-amber-400 text-xs"></i> Geolocalización con Google Maps y enlace a redes
-                </li>
-                <li class="flex items-center gap-2">
-                  <i class="fa-solid fa-check text-amber-400 text-xs"></i> Sin pagos recurrentes por plataformas externas
-                </li>
-              </ul>
-            </div>
-            <div class="pt-6 mt-6 border-t border-white/5 flex items-center justify-between">
-              <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Sector Gastronómico</span>
-              <a href="https://wa.me/51938683659?text=Hola%20Exel,%20deseo%20cotizar%20un%20Men%C3%BA%20Digital%20Interactivo" target="_blank" class="text-sm font-bold text-white hover:text-amber-300 inline-flex items-center gap-1.5 transition-colors">
-                <span>Cotizar ahora</span>
-                <i class="fa-solid fa-arrow-right text-xs"></i>
-              </a>
-            </div>
-          </div>
-
-          <!-- Servicio 4: Visualizadores 3D & Herramientas a Medida -->
-          <div class="card-hover bg-[#0c1222]/90 border border-white/10 rounded-2xl p-8 relative overflow-hidden flex flex-col justify-between">
-            <div class="space-y-4">
-              <div class="w-14 h-14 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-2xl mb-6">
-                <i class="fa-solid fa-cube"></i>
-              </div>
-              <h3 class="text-2xl font-bold text-white">Visualizadores 3D & Herramientas Corporativas</h3>
-              <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-                Aplicaciones interactivas en el navegador (visualizadores de modelos 3D, generadores de documentos, calculadoras y tableros) diseñadas exactamente a la medida de tu flujo de trabajo.
-              </p>
-              <ul class="space-y-2 pt-2 text-sm text-slate-400">
-                <li class="flex items-center gap-2">
-                  <i class="fa-solid fa-check text-emerald-400 text-xs"></i> Experiencias 3D interactivas con Three.js / WebGL
-                </li>
-                <li class="flex items-center gap-2">
-                  <i class="fa-solid fa-check text-emerald-400 text-xs"></i> Automatización de formatos y paneles operativos
-                </li>
-                <li class="flex items-center gap-2">
-                  <i class="fa-solid fa-check text-emerald-400 text-xs"></i> Máxima compatibilidad y velocidad de respuesta
-                </li>
-              </ul>
-            </div>
-            <div class="pt-6 mt-6 border-t border-white/5 flex items-center justify-between">
-              <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Innovación Técnica</span>
-              <a href="https://wa.me/51938683659?text=Hola%20Exel,%20deseo%20cotizar%20un%20proyecto%20web%20a%20medida%20o%203D" target="_blank" class="text-sm font-bold text-white hover:text-emerald-300 inline-flex items-center gap-1.5 transition-colors">
-                <span>Cotizar ahora</span>
-                <i class="fa-solid fa-arrow-right text-xs"></i>
-              </a>
-            </div>
-          </div>
-
-        </div>
+      <!-- Navegación inferior entre capítulos (#chapter-nav) -->
+      <div id="chapter-nav" class="flex items-center justify-between pt-8 border-t border-slate-200 dark:border-white/10">
+        <button id="btn-prev-chapter" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 font-bold text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-colors flex items-center gap-2">
+          <i class="fa-solid fa-chevron-left text-xs"></i> Anterior
+        </button>
+        <button id="btn-chapter-picker" class="px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/25 flex items-center gap-2">
+          <i class="fa-solid fa-book-open text-xs"></i> Índice
+        </button>
+        <button id="btn-next-chapter" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 font-bold text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-colors flex items-center gap-2">
+          Siguiente <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
       </div>
     </section>
 
-    <!-- 3. Beneficios y Proceso de Trabajo -->
-    <section id="beneficios" class="py-20 lg:py-28 relative">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <!-- Beneficios -->
-        <div class="mb-24">
-          <div class="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <span class="text-xs font-bold uppercase tracking-widest text-indigo-400">¿Por qué elegir mis servicios?</span>
-            <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Diferenciales que marcan la ventaja</h2>
-            <p class="text-slate-400 text-sm sm:text-base">Desarrollo pensando en tus metas comerciales, no solo en la estética visual.</p>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            
-            <div class="bg-[#0c1222]/60 border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-colors">
-              <div class="text-indigo-400 text-2xl mb-4"><i class="fa-solid fa-stopwatch-20"></i></div>
-              <h4 class="text-lg font-bold text-white mb-2">Entrega Rápida</h4>
-              <p class="text-slate-400 text-sm leading-relaxed">Tiempos de entrega ágiles y estrictos para que pongas a funcionar tu estrategia digital cuanto antes.</p>
-            </div>
-
-            <div class="bg-[#0c1222]/60 border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-colors">
-              <div class="text-cyan-400 text-2xl mb-4"><i class="fa-solid fa-mobile-screen"></i></div>
-              <h4 class="text-lg font-bold text-white mb-2">100% Adaptable a Móviles</h4>
-              <p class="text-slate-400 text-sm leading-relaxed">Más del 80% de tus clientes navegarán desde su celular. La experiencia de usuario será impecable.</p>
-            </div>
-
-            <div class="bg-[#0c1222]/60 border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-colors">
-              <div class="text-emerald-400 text-2xl mb-4"><i class="fa-solid fa-gauge-high"></i></div>
-              <h4 class="text-lg font-bold text-white mb-2">Máxima Optimización</h4>
-              <p class="text-slate-400 text-sm leading-relaxed">Código limpio y liviano sin plantillas pesadas, asegurando tiempos de carga casi instantáneos.</p>
-            </div>
-
-            <div class="bg-[#0c1222]/60 border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-colors">
-              <div class="text-amber-400 text-2xl mb-4"><i class="fa-solid fa-comments"></i></div>
-              <h4 class="text-lg font-bold text-white mb-2">Soporte Directo</h4>
-              <p class="text-slate-400 text-sm leading-relaxed">Trato personal y directo con el desarrollador. Respuestas inmediatas y comunicación transparente.</p>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Proceso de Trabajo en 3 Pasos -->
-        <div id="proceso" class="pt-8">
-          <div class="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <span class="text-xs font-bold uppercase tracking-widest text-emerald-400">Metodología Simple & Efectiva</span>
-            <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">3 pasos sencillos para hacer realidad tu proyecto</h2>
-            <p class="text-slate-400 text-sm sm:text-base">Sin complicaciones técnicas para ti; proceso claro de principio a fin.</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            
-            <!-- Paso 1 -->
-            <div class="relative bg-[#0c1222]/80 border border-white/10 rounded-2xl p-8">
-              <div class="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-lg mb-6 border border-indigo-500/30">
-                01
-              </div>
-              <h3 class="text-xl font-bold text-white mb-3">Idea & Planificación</h3>
-              <p class="text-slate-300 text-sm leading-relaxed">
-                Conversamos por WhatsApp o llamada sobre tu negocio, qué necesitas mostrar, tu público objetivo y los objetivos comerciales de tu página.
-              </p>
-            </div>
-
-            <!-- Paso 2 -->
-            <div class="relative bg-[#0c1222]/80 border border-white/10 rounded-2xl p-8">
-              <div class="w-12 h-12 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-black text-lg mb-6 border border-cyan-500/30">
-                02
-              </div>
-              <h3 class="text-xl font-bold text-white mb-3">Diseño & Desarrollo a Medida</h3>
-              <p class="text-slate-300 text-sm leading-relaxed">
-                Creo la estructura, diseño visual e interactividad garantizando que se vea profesional y funcione a la perfección en smartphones y ordenadores.
-              </p>
-            </div>
-
-            <!-- Paso 3 -->
-            <div class="relative bg-[#0c1222]/80 border border-white/10 rounded-2xl p-8">
-              <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-lg mb-6 border border-emerald-500/30">
-                03
-              </div>
-              <h3 class="text-xl font-bold text-white mb-3">Lanzamiento & Crecimiento</h3>
-              <p class="text-slate-300 text-sm leading-relaxed">
-                Publicamos tu sitio en internet, realizamos pruebas finales y te entrego una herramienta 100% lista para compartir y captar nuevos clientes.
-              </p>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- 4. Pie de página y Contacto Directo -->
-    <section id="contacto" class="py-20 relative overflow-hidden">
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <!-- Banner CTA WhatsApp -->
-        <div class="bg-gradient-to-br from-indigo-950/80 via-[#0d1428] to-slate-900 border border-indigo-500/30 rounded-3xl p-8 sm:p-12 lg:p-16 text-center shadow-2xl relative overflow-hidden">
-          <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-          <div class="absolute -left-20 -top-20 w-64 h-64 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
-
-          <div class="relative z-10 space-y-6 max-w-2xl mx-auto">
-            <span class="inline-block text-xs font-extrabold uppercase tracking-widest text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-3.5 py-1.5 rounded-full">
-              ¿Tienes un proyecto en mente?
-            </span>
-            
-            <h2 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-              Empecemos a construir tu presencia digital hoy mismo
-            </h2>
-            
-            <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Escríbeme directamente para contarte opciones, plazos y una cotización clara adaptada a tu presupuesto.
-            </p>
-
-            <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a href="https://wa.me/51938683659?text=Hola%20Exel,%20quiero%20cotizar%20un%20proyecto%20web" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-9 py-4 rounded-xl font-extrabold text-lg text-white bg-emerald-500 hover:bg-emerald-400 transition-all shadow-xl shadow-emerald-500/25 hover:scale-105">
-                <i class="fa-brands fa-whatsapp text-2xl"></i>
-                <span>Cotizar por WhatsApp</span>
-              </a>
-            </div>
-
-            <p class="text-xs text-slate-400 pt-2">
-              Atención rápida • Consulta sin compromiso
-            </p>
-          </div>
-        </div>
-
-      </div>
-    </section>
   </main>
 
-  <!-- Footer -->
-  <footer class="border-t border-white/5 py-12 bg-[#05070d]">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-        
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-indigo-600/30 flex items-center justify-center text-indigo-400 font-bold text-sm">
-            E
-          </div>
-          <span class="font-bold tracking-tight text-white">Exel Web Studio</span>
-          <span class="text-slate-500 text-xs">| Soluciones Digitales</span>
-        </div>
+  <!-- Barra Flotante de Acciones al Tocar Versículo -->
+  <div id="verse-floating-bar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 dark:bg-[#0c1222]/95 backdrop-blur-xl border border-white/15 px-5 py-3 rounded-2xl shadow-2xl z-50 flex items-center gap-4 text-white">
+    <button id="action-copy" class="flex items-center gap-1.5 text-xs font-semibold hover:text-indigo-400 transition-colors" title="Copiar">
+      <i class="fa-solid fa-copy text-sm"></i> Copiar
+    </button>
+    <span class="w-[1px] h-4 bg-white/20"></span>
+    <button id="action-highlight" class="flex items-center gap-1.5 text-xs font-semibold hover:text-amber-400 transition-colors" title="Resaltar">
+      <i class="fa-solid fa-highlighter text-sm"></i> Resaltar
+    </button>
+    <span class="w-[1px] h-4 bg-white/20"></span>
+    <button id="action-share" class="flex items-center gap-1.5 text-xs font-semibold hover:text-cyan-400 transition-colors" title="Compartir">
+      <i class="fa-solid fa-share-nodes text-sm"></i> Compartir
+    </button>
+  </div>
 
-        <div class="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400">
-          <a href="#servicios" class="hover:text-white transition-colors">Servicios</a>
-          <a href="#beneficios" class="hover:text-white transition-colors">Beneficios</a>
-          <a href="#proceso" class="hover:text-white transition-colors">Proceso</a>
-          <a href="#contacto" class="hover:text-white transition-colors">Contacto</a>
+  <!-- Modal de Búsqueda Global y Marcadores -->
+  <div id="modal-search" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/15 w-full max-w-2xl max-h-[85vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+      
+      <div class="p-4 sm:p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-3 w-full mr-4">
+          <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+          <input id="search-input" type="text" placeholder="Buscar palabras, frases o versículos..." class="w-full bg-transparent text-slate-900 dark:text-white placeholder-slate-400 font-medium focus:outline-none text-base" />
         </div>
-
-        <div class="text-xs text-slate-500">
-          &copy; <span id="year"></span> Exel. Todos los derechos reservados.
-        </div>
+        <button id="close-search" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
       </div>
+
+      <!-- Filtros de búsqueda -->
+      <div class="px-6 py-3 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/10 flex gap-2 text-xs font-semibold">
+        <button data-filter="all" class="search-filter-btn px-3 py-1.5 rounded-lg bg-indigo-600 text-white">Toda la Biblia</button>
+        <button data-filter="ot" class="search-filter-btn px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-white/5 text-slate-600 dark:text-slate-300">Antiguo Testamento</button>
+        <button data-filter="nt" class="search-filter-btn px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-white/5 text-slate-600 dark:text-slate-300">Nuevo Testamento</button>
+      </div>
+
+      <!-- Resultados -->
+      <div id="search-results" class="flex-grow overflow-y-auto p-6 space-y-4 divide-y divide-slate-100 dark:divide-white/5">
+        <div class="text-center text-slate-400 py-12 text-sm">Escribe al menos 3 caracteres para buscar</div>
+      </div>
+
     </div>
+  </div>
+
+  <!-- Footer minimalista -->
+  <footer class="border-t border-slate-200 dark:border-white/5 py-6 text-center text-xs text-slate-400">
+    <p>Biblia Interactiva Pro • <span id="footer-version">RVR 1909</span></p>
   </footer>
 
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
+  <!-- Scripts -->
+  <script src="js/app.js"></script>
 </body>
 </html>
