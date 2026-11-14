@@ -82,7 +82,6 @@ async function loadBibleVersion(versionKey) {
       initApp();
     } catch (err) {
       console.error('Error cargando RVR 1909 local', err);
-      // Fallback a mock si no existe data local
       state.bibleData = getMockBible();
       initApp();
     }
@@ -112,7 +111,6 @@ function parseBebliaXML(xmlText) {
   const booksNode = xmlDoc.getElementsByTagName('BIBLEBOOK') || xmlDoc.getElementsByTagName('book');
   
   let books = [];
-  // Parser robusto adaptado al esquema XML de Beblia
   for (let i = 0; i < booksNode.length; i++) {
     const bNode = booksNode[i];
     const bName = bNode.getAttribute('bname') || bNode.getAttribute('name') || `Libro ${i+1}`;
@@ -155,19 +153,18 @@ function getMockBible() {
 
 function initApp() {
   renderBooks();
-  if (state.currentBook) {
+  if (state.currentBook !== null) {
     renderVerses(state.currentBook, state.currentChapter);
   }
 }
 
-// Renderizar Libros
 function renderBooks() {
   const grid = document.getElementById('books-grid');
   grid.innerHTML = '';
   
   const filtered = state.bibleData.filter(b => b.testament === state.testament);
   
-  filtered.forEach((book, index) => {
+  filtered.forEach((book) => {
     const globalIndex = state.bibleData.indexOf(book);
     const card = document.createElement('div');
     card.className = 'bg-white dark:bg-[#0c1222]/80 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col justify-between hover:border-indigo-500/50 hover:shadow-lg transition-all cursor-pointer group';
@@ -192,7 +189,6 @@ function selectBook(bookIndex) {
   document.getElementById('btn-back').classList.remove('hidden');
 }
 
-// Renderizar Versículos
 function renderVerses(bookIndex, chapterNum) {
   state.currentBook = bookIndex;
   state.currentChapter = chapterNum;
@@ -222,14 +218,12 @@ function renderVerses(bookIndex, chapterNum) {
     container.appendChild(p);
   });
 
-  // Actualizar Guardado Continuar Leyendo
   state.lastRead = { bookIndex, chapterNum, title: `${book.name} ${chapterNum}` };
   localStorage.setItem('bible_last_read', JSON.stringify(state.lastRead));
   checkContinueReading();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// UI Event Listeners
 function initEventListeners() {
   document.getElementById('tab-ot').onclick = () => {
     state.testament = 'ot';
@@ -262,7 +256,6 @@ function initEventListeners() {
     localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
   };
 
-  // Popover Tipografía
   const fontBtn = document.getElementById('btn-font-settings');
   const popover = document.getElementById('popover-font');
   fontBtn.onclick = (e) => {
@@ -292,7 +285,6 @@ function initEventListeners() {
     };
   });
 
-  // Navegación de Capítulos
   document.getElementById('btn-prev-chapter').onclick = () => {
     if (state.currentChapter > 1) {
       renderVerses(state.currentBook, state.currentChapter - 1);
@@ -310,7 +302,6 @@ function initEventListeners() {
     document.getElementById('btn-back').classList.add('hidden');
   };
 
-  // Búsqueda Global Modal
   const searchModal = document.getElementById('modal-search');
   document.getElementById('btn-search-global').onclick = () => searchModal.classList.remove('hidden');
   document.getElementById('close-search').onclick = () => searchModal.classList.add('hidden');
@@ -326,7 +317,6 @@ function initEventListeners() {
     searchTimeout = setTimeout(() => performGlobalSearch(query), 300);
   };
 
-  // Scroll Progress
   window.onscroll = () => {
     const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
     const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -352,6 +342,16 @@ function loadSavedPreferences() {
   if (fSize) {
     state.fontSize = parseInt(fSize);
     updateTypography();
+  }
+}
+
+function initTheme() {
+  if (!localStorage.getItem('theme')) {
+    document.documentElement.classList.add('dark');
+  } else if (localStorage.getItem('theme') === 'light') {
+    document.documentElement.classList.remove('dark');
+  } else {
+    document.documentElement.classList.add('dark');
   }
 }
 
