@@ -1,13 +1,26 @@
 /**
  * Visor Bíblico CAD / PWA - Lógica Principal
- * Soporte multiversión, IndexedDB, Parser XML de Beblia y UI responsiva.
+ * Soporte multiversión, IndexedDB, Parser XML robusto de Beblia y UI responsiva.
  */
 
 const BEBLIA_BASE_URL = 'https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master/';
 
+const BOOK_NAMES_ES = [
+  "Génesis", "Éxodo", "Levítico", "Números", "Deuteronomio", "Josué", "Jueces", "Rut",
+  "1 Samuel", "2 Samuel", "1 Reyes", "2 Reyes", "1 Crónicas", "2 Crónicas", "Esdras",
+  "Nehemías", "Ester", "Job", "Salmos", "Proverbios", "Eclesiastés", "Cantares",
+  "Isaías", "Jeremías", "Lamentaciones", "Ezequiel", "Daniel", "Oseas", "Joel",
+  "Amós", "Abdías", "Jonás", "Miqueas", "Nahum", "Habacuc", "Sofonías",
+  "Hageo", "Zacarías", "Malaquías",
+  "Mateo", "Marcos", "Lucas", "Juan", "Hechos", "Romanos", "1 Corintios",
+  "2 Corintios", "Gálatas", "Efesios", "Filipenses", "Colosenses", "1 Tesalonicenses",
+  "2 Tesalonicenses", "1 Timoteo", "2 Timoteo", "Tito", "Filemón", "Hebreos",
+  "Santiago", "1 Pedro", "2 Pedro", "1 Juan", "2 Juan", "3 Juan", "Judas", "Apocalipsis"
+];
+
 let state = {
   version: 'rvr1909',
-  testament: 'ot',
+  testament: 'ot', // 'ot'/'old' o 'nt'/'new'
   currentBook: null,
   currentChapter: 1,
   bibleData: null,
@@ -62,73 +75,132 @@ document.addEventListener('DOMContentLoaded', async () => {
   checkContinueReading();
 });
 
+// Normalizador de testamentos ('ot', 'nt', 'old', 'new', o índice numérico)
+function normalizeTestament(t) {
+  if (t === 'old' || t === 'ot') return 'ot';
+  if (t === 'new' || t === 'nt') return 'nt';
+  const num = parseInt(t);
+  if (!isNaN(num)) {
+    return num < 39 ? 'ot' : 'nt';
+  }
+  return 'ot';
+}
+
 // Cargar y Parsear Biblia
 async function loadBibleVersion(versionKey) {
+  const loadingEl = document.getElementById('loading');
+  if (loadingEl) loadingEl.classList.remove('hidden');
   document.getElementById('current-reference-badge').textContent = 'Cargando versión...';
   
-  // Revisar IndexedDB
-  let cached = await getVersionFromIDB(versionKey);
-  if (cached) {
-    state.bibleData = cached;
-    initApp();
-    return;
+  try {
+    let cached = await getVersionFromIDB(versionKey);
+    if (cached) {
+      state.bibleData = processRawBibleData(cached);
+      initApp();
+      return;
+    }
+
+    if (versionKey === 'rvr1909') {
+      try {
+        const res = await fetch('data/rvr1909.json');
+        const rawJson = await res.json();
+        state.bibleData = processRawBibleData(rawJson);
+        await saveVersionToIDB('rvr1909', state.bibleData);
+        initApp();
+      } catch (err) {
+        console.error('Error cargando RVR 1909 local', err);
+        state.bibleData = getMockBible();
+        initApp();
+      }
+    } else {
+      // Cargar XML desde Beblia con fallback automático
+      const candidates = [
+        versionKey,
+        versionKey.replace('Bible', ''),
+        'Spanish1960Bible',
+        'SpanishReinaValera1960Bible'
+      ];
+
+      let xmlText = null;
+      for (const cand of candidates) {
+        try {
+          const url = `${BEBLIA_BASE_URL}${cand}.xml`;
+          const res = await fetch(url);
+          if (res.ok) {
+            xmlText = await res.text();
+            break;
+          }
+        } catch (e) {}
+      }
+
+      if (xmlText) {
+        state.bibleData = parseBebliaXML(xmlText);
+        await saveVersionToIDB(versionKey, state.bibleData);
+        initApp();
+      } else {
+        throw new Error('No se pudo descargar de Beblia');
+      }
+    }
+    const sel = document.getElementById('select-version');
+    if (sel && sel.selectedOptions[0]) {
+      document.getElementById('footer-version').textContent = sel.selectedOptions[0].text;
+    }
+  } catch (err) {
+    console.error('Error descargando versión', err);
+    alert('No se pudo descargar esta versión o no hay conexión. Volviendo a RVR 1909.');
+    state.version = 'rvr1909';
+    document.getElementById('select-version').value = 'rvr1909';
+    await loadBibleVersion('rvr1909');
+  } finally {
+    if (loadingEl) loadingEl.classList.add('hidden');
+  }
+}
+
+function processRawBibleData(data) {
+  let booksArr = [];
+  if (Array.isArray(data)) {
+    booksArr = data;
+  } else if (data && Array.isArray(data.books)) {
+    booksArr = data.books;
+  } else {
+    booksArr = getMockBible();
   }
 
-  if (versionKey === 'rvr1909') {
-    try {
-      const res = await fetch('data/rvr1909.json');
-      state.bibleData = await res.json();
-      await saveVersionToIDB('rvr1909', state.bibleData);
-      initApp();
-    } catch (err) {
-      console.error('Error cargando RVR 1909 local', err);
-      state.bibleData = getMockBible();
-      initApp();
-    }
-  } else {
-    // Cargar XML desde Beblia
-    try {
-      const url = `${BEBLIA_BASE_URL}${versionKey}.xml`;
-      const res = await fetch(url);
-      const xmlText = await res.text();
-      state.bibleData = parseBebliaXML(xmlText);
-      await saveVersionToIDB(versionKey, state.bibleData);
-      initApp();
-    } catch (err) {
-      console.error('Error descargando versión de Beblia', err);
-      alert('No se pudo descargar esta versión. Comprueba tu conexión.');
-      state.version = 'rvr1909';
-      document.getElementById('select-version').value = 'rvr1909';
-      await loadBibleVersion('rvr1909');
-    }
-  }
-  document.getElementById('footer-version').textContent = document.getElementById('select-version').selectedOptions[0].text;
+  return booksArr.map((b, idx) => {
+    const name = b.name || BOOK_NAMES_ES[idx] || `Libro ${idx + 1}`;
+    const testament = normalizeTestament(b.testament !== undefined ? b.testament : idx);
+    const chapters = Array.isArray(b.chapters) ? b.chapters : [];
+    return { name, testament, chapters };
+  });
 }
 
 function parseBebliaXML(xmlText) {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-  const booksNode = xmlDoc.getElementsByTagName('BIBLEBOOK') || xmlDoc.getElementsByTagName('book');
+  const booksNode = xmlDoc.querySelectorAll('book, BIBLEBOOK');
   
   let books = [];
-  for (let i = 0; i < booksNode.length; i++) {
-    const bNode = booksNode[i];
-    const bName = bNode.getAttribute('bname') || bNode.getAttribute('name') || `Libro ${i+1}`;
-    const testament = i < 39 ? 'ot' : 'nt';
-    const chaptersNode = bNode.getElementsByTagName('CHAPTER') || bNode.getElementsByTagName('chapter');
+  booksNode.forEach((bNode, index) => {
+    let bName = bNode.getAttribute('bname') || bNode.getAttribute('name');
+    const numAttr = parseInt(bNode.getAttribute('number') || (index + 1));
+    if (!bName) {
+      bName = BOOK_NAMES_ES[numAttr - 1] || BOOK_NAMES_ES[index] || `Libro ${index + 1}`;
+    }
+    
+    const testament = normalizeTestament(index < 39 ? 'ot' : 'nt');
+    const chaptersNode = bNode.querySelectorAll('chapter, CHAPTER');
     
     let chapters = [];
-    for (let c = 0; c < chaptersNode.length; c++) {
-      const cNode = chaptersNode[c];
-      const versesNode = cNode.getElementsByTagName('VERS') || cNode.getElementsByTagName('verse');
+    chaptersNode.forEach((cNode) => {
+      const versesNode = cNode.querySelectorAll('verse, VERS');
       let verses = [];
-      for (let v = 0; v < versesNode.length; v++) {
-        verses.push(versesNode[v].textContent.trim());
-      }
+      versesNode.forEach(vNode => {
+        verses.push(vNode.textContent ? vNode.textContent.trim() : '');
+      });
       chapters.push(verses);
-    }
+    });
     books.push({ name: bName, testament, chapters });
-  }
+  });
   return books.length ? books : getMockBible();
 }
 
@@ -162,7 +234,8 @@ function renderBooks() {
   const grid = document.getElementById('books-grid');
   grid.innerHTML = '';
   
-  const filtered = state.bibleData.filter(b => b.testament === state.testament);
+  const targetTestament = normalizeTestament(state.testament);
+  const filtered = state.bibleData.filter(b => normalizeTestament(b.testament) === targetTestament);
   
   filtered.forEach((book) => {
     const globalIndex = state.bibleData.indexOf(book);
@@ -225,19 +298,15 @@ function renderVerses(bookIndex, chapterNum) {
 }
 
 function initEventListeners() {
-  document.getElementById('tab-ot').onclick = () => {
-    state.testament = 'ot';
-    document.getElementById('tab-ot').className = 'flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm transition-all';
-    document.getElementById('tab-nt').className = 'flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all';
+  const handleTabClick = (testamentVal, activeBtnId, inactiveBtnId) => {
+    state.testament = normalizeTestament(testamentVal);
+    document.getElementById(activeBtnId).className = 'flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm transition-all';
+    document.getElementById(inactiveBtnId).className = 'flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all';
     renderBooks();
   };
 
-  document.getElementById('tab-nt').onclick = () => {
-    state.testament = 'nt';
-    document.getElementById('tab-nt').className = 'flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm transition-all';
-    document.getElementById('tab-ot').className = 'flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all';
-    renderBooks();
-  };
+  document.getElementById('tab-ot').onclick = () => handleTabClick('ot', 'tab-ot', 'tab-nt');
+  document.getElementById('tab-nt').onclick = () => handleTabClick('nt', 'tab-nt', 'tab-ot');
 
   document.getElementById('btn-back').onclick = () => {
     document.getElementById('view-verses').classList.add('hidden');

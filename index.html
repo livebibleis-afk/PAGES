@@ -47,6 +47,14 @@
 </head>
 <body class="bg-slate-50 dark:bg-[#070a13] text-slate-800 dark:text-slate-100 antialiased h-full flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
 
+  <!-- Spinner / Indicador de Carga Global -->
+  <div id="loading" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center">
+    <div class="bg-white dark:bg-[#0c1222] px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-200 dark:border-white/10">
+      <i class="fa-solid fa-spinner animate-spin text-indigo-500 text-xl"></i>
+      <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Cargando Biblia...</span>
+    </div>
+  </div>
+
   <!-- Barra de Progreso de Lectura -->
   <div id="reading-progress" class="fixed top-0 left-0 h-1 bg-indigo-500 z-50 transition-all duration-150" style="width: 0%"></div>
 
@@ -66,12 +74,11 @@
           <!-- Barra de contexto interactiva -->
           <div class="flex items-center gap-2">
             <select id="select-version" class="version-select text-xs font-semibold bg-transparent text-indigo-600 dark:text-indigo-400 focus:outline-none cursor-pointer py-0.5" aria-label="Seleccionar versión bíblica">
-              <option value="rvr1909" class="dark:bg-[#070a13]">Reina-Valera 1909</option>
-              <option value="SpanishReinaValera1960Bible" class="dark:bg-[#070a13]">RVR 1960</option>
-              <option value="SpanishNVI" class="dark:bg-[#070a13]">Nueva Versión Internacional (NVI)</option>
-              <option value="SpanishTLA" class="dark:bg-[#070a13]">Traducción en Lenguaje Actual (TLA)</option>
-              <option value="SpanishLBLA" class="dark:bg-[#070a13]">La Biblia de las Américas (LBLA)</option>
-              <option value="SpanishDHH" class="dark:bg-[#070a13]">Dios Habla Hoy (DHH)</option>
+              <option value="rvr1909" class="dark:bg-[#070a13]" data-testament="old">Reina-Valera 1909</option>
+              <option value="SpanishReinaValera1960Bible" class="dark:bg-[#070a13]" data-testament="old">RVR 1960</option>
+              <option value="SpanishNVIBible" class="dark:bg-[#070a13]" data-testament="old">Nueva Versión Internacional (NVI)</option>
+              <option value="SpanishTLABible" class="dark:bg-[#070a13]" data-testament="old">Traducción en Lenguaje Actual (TLA)</option>
+              <option value="SpanishLBLABible" class="dark:bg-[#070a13]" data-testament="old">La Biblia de las Américas (LBLA)</option>
             </select>
             <span class="text-slate-400 text-xs">•</span>
             <span id="current-reference-badge" class="text-xs font-medium text-slate-500 dark:text-slate-400 truncate max-w-[120px] sm:max-w-xs">Selecciona un libro</span>
@@ -144,10 +151,10 @@
 
       <!-- Pestañas de Testamentos con Conteo -->
       <div class="flex gap-2 p-1 bg-slate-200/60 dark:bg-white/5 rounded-2xl border border-slate-300/50 dark:border-white/5">
-        <button id="tab-ot" class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm transition-all">
+        <button id="tab-ot" data-testament="old" class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm transition-all">
           Antiguo Testamento (<span id="count-ot">39</span>)
         </button>
-        <button id="tab-nt" class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
+        <button id="tab-nt" data-testament="new" class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
           Nuevo Testamento (<span id="count-nt">27</span>)
         </button>
       </div>
