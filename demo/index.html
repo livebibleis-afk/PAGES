@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modelo 3D | E3LT27</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%230891b2%22/%3E%3C/svg%3E" />
+  <meta name="description" content="Modelo 3D interactivo de la vivienda E3LT27 (lote 6,20 × 15,00 m) generado con three.js a partir del plano unificado." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    #escena canvas { display: block; }
+    .etiqueta { pointer-events: none; font: 600 12px/1.2 ui-sans-serif, system-ui, sans-serif; color: #0f172a;
+      background: rgba(255,255,255,.88); border: 1px solid rgba(15,23,42,.15); border-radius: 6px; padding: 3px 7px;
+      box-shadow: 0 2px 6px rgba(15,23,42,.18); text-align: center; white-space: nowrap; }
+    .etiqueta small { display: block; font-weight: 500; font-size: 10px; color: #475569; }
+    .etiqueta.ext { background: rgba(236,253,245,.9); color: #166534; }
+    .btn-vista[aria-pressed="true"] { background: #0891b2; color: #fff; border-color: #06b6d4; }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body class="h-full flex flex-col font-sans overflow-hidden">
+
+  <header class="h-16 bg-slate-900/90 border-b border-slate-800 backdrop-blur px-4 md:px-6 flex items-center justify-between z-20 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-cyan-900/40">
+        <i class="fa-solid fa-cube text-xl"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-lg font-bold text-white tracking-tight">Modelo 3D</h1>
+          <span class="px-2 py-0.5 text-xs font-semibold rounded bg-cyan-950 text-cyan-400 border border-cyan-800/60">E3LT27</span>
+        </div>
+        <p class="text-xs text-slate-400 hidden sm:block">Vivienda de un piso · lote 6,20 × 15,00 m · three.js</p>
+      </div>
+    </div>
+    <nav class="flex items-center gap-2 sm:gap-3">
+      <button id="btnPanel" type="button" aria-label="Mostrar u ocultar el panel" class="md:hidden p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white">
+        <i class="fa-solid fa-sliders"></i>
+      </button>
+    </nav>
+  </header>
+
+  <div class="flex-1 flex overflow-hidden relative">
+    <aside id="panel" class="fixed inset-y-16 left-0 z-30 w-72 bg-slate-900/95 border-r border-slate-800 flex flex-col transition-transform duration-300 -translate-x-full md:relative md:translate-x-0 md:inset-y-0 backdrop-blur overflow-y-auto">
+      <section class="p-4 border-b border-slate-800">
+        <h2 class="text-xs uppercase font-semibold text-slate-400 tracking-wider mb-2">Vista</h2>
+        <div class="grid grid-cols-2 gap-2" role="group" aria-label="Tipo de vista">
+          <button type="button" data-vista="3d" aria-pressed="true" class="btn-vista px-3 py-2 rounded-lg text-xs font-medium border border-slate-700 bg-slate-800 hover:bg-slate-700 transition"><i class="fa-solid fa-cube mr-1"></i> Vista 3D</button>
+          <button type="button" data-vista="planta" aria-pressed="false" class="btn-vista px-3 py-2 rounded-lg text-xs font-medium border border-slate-700 bg-slate-800 hover:bg-slate-700 transition"><i class="fa-solid fa-border-all mr-1"></i> Planta</button>
+        </div>
+        <button id="btnReset" type="button" class="mt-2 w-full px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"><i class="fa-solid fa-rotate-left mr-1"></i> Restablecer vista</button>
+      </section>
+
+      <section class="p-4 border-b border-slate-800">
+        <h2 class="text-xs uppercase font-semibold text-slate-400 tracking-wider mb-2">Capas</h2>
+        <div class="space-y-2 text-sm">
+          <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-capa="muros" checked class="accent-cyan-500"> Muros, puertas y ventanas</label>
+          <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-capa="mobiliario" checked class="accent-cyan-500"> Mobiliario</label>
+          <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-capa="exteriores" checked class="accent-cyan-500"> Jardín, vereda y calle</label>
+          <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-capa="techo" class="accent-cyan-500"> Techo (losa plana)</label>
+          <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-capa="etiquetas" checked class="accent-cyan-500"> Etiquetas de ambientes</label>
+        </div>
+      </section>
+
+      <section class="p-4 border-b border-slate-800">
+        <h2 class="text-xs uppercase font-semibold text-slate-400 tracking-wider mb-2">Ambientes</h2>
+        <ul id="listaAmbientes" class="space-y-1 text-xs"></ul>
+        <p id="areaTotal" class="mt-3 text-xs text-slate-400"></p>
+      </section>
+
+      <section class="p-4 text-[11px] leading-relaxed text-slate-400">
+        <p><span class="text-slate-300 font-semibold">Fuente:</span> <span class="text-slate-300">E3LT27_Unificado.svg</span> · escala 100 u = 1 m.</p>
+        <p class="mt-1">Muros h = 2,60 m · e = 0,15 m · ventanas con alféizar 0,90 m y dintel 2,10 m. Volumetría esquemática: alturas de mobiliario y techo aproximadas.</p>
+        <p class="mt-2 text-slate-500">Arrastra o desliza un dedo para girar · rueda o pellizca para acercar · clic derecho o dos dedos para desplazar.</p>
+      </section>
+    </aside>
+
+    <main class="flex-1 relative bg-slate-900">
+      <div id="escena" class="absolute inset-0" role="img" aria-label="Modelo 3D interactivo de la vivienda E3LT27"></div>
+      <div id="cargando" class="absolute inset-0 flex items-center justify-center text-slate-300 text-sm"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Cargando modelo…</div>
+      <div id="error" class="hidden absolute inset-0 flex items-center justify-center p-6 text-center text-red-300 text-sm"></div>
+      <div class="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg bg-slate-950/70 border border-slate-800 text-[11px] text-slate-300 pointer-events-none">
+        <i class="fa-solid fa-compass text-cyan-400 mr-1"></i><span id="modoTexto">Vista 3D</span> · Escala real (m)
+      </div>
+    </main>
+  </div>
+
+  <!-- Geometría extraída de planos/E3LT27_Unificado.svg con scripts/extraer_modelo3d.py (no editar a mano) -->
+  <script id="datos-modelo" type="application/json">{"fuente":"planos/E3LT27_Unificado.svg","escala":"100 unidades SVG = 1 m (cotas 6.20 m = 620 u, 15.00 m = 1500 u)","lote":[0,0,6.2,15.0],"alturaMuro":2.6,"espesorMuro":0.15,"ventana":{"alfeizar":0.9,"dintel":2.1},"puertaAlto":2.1,"muros":[[0.0,0.0,6.2,0.0],[0.0,0.0,0.0,15.0],[6.2,0.0,6.2,13.5],[3.8,13.5,6.2,13.5],[3.0,0.0,3.0,3.7],[3.0,4.5,3.0,6.2],[3.0,7.0,3.0,9.7],[3.0,11.3,3.0,15.0],[0.0,4.5,3.0,4.5],[0.0,7.0,3.0,7.0],[0.0,10.5,3.0,10.5],[3.8,1.5,6.2,1.5],[3.8,5.5,6.2,5.5]],"ventanas":[[4.5,13.5,5.5,13.5],[0.0,5.0,0.0,5.8],[3.0,0.6,3.0,1.4]],"puertas":[{"tipo":"puerta","bisagra":[3.0,13.5],"cierre":[3.8,13.5],"punta":[3.0,12.7]},{"tipo":"puerta","bisagra":[3.0,4.5],"cierre":[3.0,3.7],"punta":[2.2,4.5]},{"tipo":"puerta","bisagra":[3.0,7.0],"cierre":[3.0,6.2],"punta":[2.2,7.0]},{"tipo":"puerta","bisagra":[3.0,10.5],"cierre":[3.0,9.7],"punta":[2.2,10.5]},{"tipo":"puerta","bisagra":[3.0,10.5],"cierre":[3.0,11.3],"punta":[2.2,10.5]},{"tipo":"porton","bisagra":[0.0,15.0],"cierre":[1.5,15.0],"punta":[0.0,13.5]},{"tipo":"porton","bisagra":[3.0,15.0],"cierre":[1.5,15.0],"punta":[3.0,13.5]}],"ambientes":[{"nombre":"Cuarto \"03\"","zona":"E · Íntima","rect":[0.0,0.0,3.0,4.5],"color":"#e8dccb"},{"nombre":"Baño","zona":"F · Húmeda","rect":[0.0,4.5,3.0,7.0],"color":"#cfe3ea"},{"nombre":"Cuarto \"02\"","zona":"G · Íntima","rect":[0.0,7.0,3.0,10.5],"color":"#e8dccb"},{"nombre":"Cochera","zona":"H · Acceso","rect":[0.0,10.5,3.0,15.0],"color":"#c9c9c4"},{"nombre":"Pasillo","zona":"","rect":[3.0,0.0,3.8,13.5],"color":"#ddd5c7"},{"nombre":"Lavandería","zona":"I · Servicio","rect":[3.8,0.0,6.2,1.5],"color":"#e6e2d3"},{"nombre":"Cocina","zona":"J · Servicio","rect":[3.8,1.5,6.2,5.5],"color":"#ece6d2"},{"nombre":"Sala","zona":"K · Social","rect":[3.8,5.5,6.2,13.5],"color":"#e9dcc6"}],"exteriores":[{"nombre":"Jardín","rect":[3.0,13.5,6.2,15.0],"color":"#9fcf8f","tipo":"jardin"},{"nombre":"Vereda (1.00 m)","rect":[0.0,15.0,6.2,16.0],"color":"#c8c8c8","tipo":"vereda"},{"nombre":"Jardín exterior (1.00 m)","rect":[0.0,16.0,6.2,17.0],"color":"#a9d39c","tipo":"jardin"}],"mobiliario":[{"nombre":"Cama","rect":[0.1,1.0,1.4,2.7],"alto":0.55,"color":"#f3efe8"},{"nombre":"Cama","rect":[0.1,8.0,1.4,9.7],"alto":0.55,"color":"#f3efe8"},{"nombre":"Ducha","rect":[0.1,4.6,0.8,5.3],"alto":0.08,"color":"#dfeff5"},{"nombre":"Inodoro","rect":[2.2,4.85,2.9,5.2],"alto":0.42,"color":"#ffffff"},{"nombre":"Lavatorio","rect":[1.0,6.5,1.6,6.9],"alto":0.85,"color":"#ffffff"},{"nombre":"Lavadero","rect":[4.6,1.05,5.4,1.47],"alto":0.9,"color":"#e5e7eb"},{"nombre":"Lavadora","rect":[5.65,1.05,6.1,1.47],"alto":0.85,"color":"#f5f5f5"},{"nombre":"Cocina","rect":[5.4,4.9,6.1,5.5],"alto":0.9,"color":"#d1d5db"},{"nombre":"Lavaplatos","rect":[3.9,5.0,4.7,5.5],"alto":0.9,"color":"#e5e7eb"},{"nombre":"Sofá","rect":[5.5,6.5,6.1,8.3],"alto":0.8,"color":"#6b7f99"},{"nombre":"Sofá","rect":[4.1,7.7,5.5,8.3],"alto":0.8,"color":"#6b7f99"},{"nombre":"Mesa de centro","rect":[4.3,6.8,5.2,7.3],"alto":0.45,"color":"#a47148"},{"nombre":"Auto","rect":[0.8,11.2,2.2,14.0],"alto":1.45,"color":"#94a3b8"},{"nombre":"Registro","rect":[2.5,11.0,3.0,11.5],"alto":0.05,"color":"#9ca3af"}],"arboles":[{"c":[4.3,14.25],"r":0.3},{"c":[5.0,14.0],"r":0.25},{"c":[5.7,14.4],"r":0.35}],"escalera":{"rect":[3.85,0.0,6.15,0.65],"pasos":11}}</script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    const D = JSON.parse(document.getElementById('datos-modelo').textContent);
+    const H = D.alturaMuro, T = D.espesorMuro;
+    const CX = D.lote[2] / 2, CZ = 8.5;              // centro de encuadre (lote + vereda)
+    const P = (x, y) => [x - CX, y - CZ];              // plano (m) -> escena (x, z)
+
+    const cont = document.getElementById('escena');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    cont.appendChild(renderer.domElement);
+
+    const etiquetasRenderer = new CSS2DRenderer();
+    etiquetasRenderer.domElement.style.position = 'absolute';
+    etiquetasRenderer.domElement.style.inset = '0';
+    etiquetasRenderer.domElement.style.pointerEvents = 'none';
+    cont.appendChild(etiquetasRenderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#dbe7ef');
+    scene.fog = new THREE.Fog('#dbe7ef', 45, 110);
+
+    // --- Cámaras y controles ---
+    const persp = new THREE.PerspectiveCamera(45, 1, 0.1, 300);
+    const orto = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
+    orto.up.set(0, 0, -1);                            // el norte del plano (arriba del SVG) queda arriba
+    let camara = persp, modo = '3d';
+    let controles = new OrbitControls(persp, renderer.domElement);
+
+    function configurarControles() {
+      controles.dispose();
+      controles = new OrbitControls(camara, renderer.domElement);
+      controles.enableDamping = true;
+      controles.dampingFactor = 0.08;
+      if (modo === 'planta') { controles.enableRotate = false; controles.screenSpacePanning = true; controles.minZoom = 0.5; controles.maxZoom = 6; }
+      else { controles.maxPolarAngle = Math.PI * 0.49; controles.minDistance = 4; controles.maxDistance = 70; }
+    }
+
+    function vista3D() {
+      camara = persp; modo = '3d';
+      persp.position.set(9.5, 11.5, 13.5);
+      configurarControles();
+      controles.target.set(0, 0.4, 0.3);
+      controles.update();
+    }
+    function vistaPlanta() {
+      camara = orto; modo = 'planta';
+      orto.position.set(0, 60, 0);
+      orto.zoom = 1;
+      configurarControles();
+      controles.target.set(0, 0, 0);
+      orto.lookAt(0, 0, 0);
+      ajustarOrto();
+      controles.update();
+    }
+    function ajustarOrto() {
+      const w = cont.clientWidth, h = cont.clientHeight, asp = w / h;
+      const alto = Math.max(19.5, 9.5 / asp);           // encuadra 15 m de lote + 2 m de exteriores
+      orto.top = alto / 2; orto.bottom = -alto / 2; orto.left = -alto * asp / 2; orto.right = alto * asp / 2;
+      orto.updateProjectionMatrix();
+    }
+
+    // --- Luces ---
+    scene.add(new THREE.HemisphereLight('#ffffff', '#b9c4a8', 1.1));
+    const sol = new THREE.DirectionalLight('#fff4e0', 2.4);
+    sol.position.set(-9, 18, 7);
+    sol.castShadow = true;
+    sol.shadow.mapSize.set(2048, 2048);
+    Object.assign(sol.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 50 });
+    sol.shadow.bias = -0.0005;
+    sol.shadow.normalBias = 0.02;
+    scene.add(sol);
+
+    // --- Utilidades ---
+    const mats = {};
+    const mat = (color, extra = {}) => {
+      const k = color + JSON.stringify(extra);
+      return mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0, ...extra }));
+    };
+    function caja(grupo, x1, z1, x2, z2, y1, y2, material, sombras = true) {
+      const [ax, az] = P(Math.min(x1, x2), Math.min(z1, z2));
+      const w = Math.abs(x2 - x1), d = Math.abs(z2 - z1), h = y2 - y1;
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+      m.position.set(ax + w / 2, y1 + h / 2, az + d / 2);
+      m.castShadow = sombras; m.receiveShadow = true;
+      grupo.add(m);
+      return m;
+    }
+    function etiqueta(texto, sub, x, y, z, cls = '') {
+      const div = document.createElement('div');
+      div.className = 'etiqueta ' + cls;
+      div.innerHTML = texto + (sub ? `<small>${sub}</small>` : '');
+      const o = new CSS2DObject(div);
+      const [sx, sz] = P(x, z);
+      o.position.set(sx, y, sz);
+      return o;
+    }
+
+    const capas = {
+      muros: new THREE.Group(), mobiliario: new THREE.Group(), exteriores: new THREE.Group(),
+      techo: new THREE.Group(), etiquetas: new THREE.Group(), base: new THREE.Group()
+    };
+    Object.values(capas).forEach(g => scene.add(g));
+
+    // --- Terreno, calle y losa del lote ---
+    const suelo = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), mat('#cfd8c4'));
+    suelo.rotation.x = -Math.PI / 2; suelo.position.y = -0.12; suelo.receiveShadow = true;
+    capas.base.add(suelo);
+    caja(capas.base, 0, 0, D.lote[2], D.lote[3], -0.12, 0, mat('#b9b2a6'), false);
+    // calle frente al lote (más allá del jardín exterior, y > 19 m en el SVG = lindero discontinuo)
+    caja(capas.exteriores, -12, 17.15, 18.2, 24, -0.12, -0.1, mat('#5b6066'), false);
+    caja(capas.exteriores, -12, 17.0, 18.2, 17.15, -0.12, 0.02, mat('#a3a3a3'), false);
+    for (let x = -11; x < 18; x += 3) caja(capas.exteriores, x, 20.5, x + 1.5, 20.62, -0.1, -0.095, mat('#f5f5f4'), false);
+
+    // --- Pisos por ambiente ---
+    const area = r => (r[2] - r[0]) * (r[3] - r[1]);
+    let total = 0;
+    const lista = document.getElementById('listaAmbientes');
+    for (const a of D.ambientes) {
+      const [x1, z1, x2, z2] = a.rect;
+      caja(capas.base, x1, z1, x2, z2, 0, 0.03, mat(a.color, { roughness: 0.7 }), false);
+      const ar = area(a.rect); total += ar;
+      capas.etiquetas.add(etiqueta(a.nombre, `${ar.toFixed(2).replace('.', ',')} m²`, (x1 + x2) / 2, 0.35, (z1 + z2) / 2));
+      const li = document.createElement('li');
+      li.className = 'flex items-center justify-between gap-2 px-2 py-1 rounded bg-slate-800/60';
+      li.innerHTML = `<span class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm border border-slate-600" style="background:${a.color}"></span>${a.nombre}</span><span class="text-slate-400">${ar.toFixed(2).replace('.', ',')} m²</span>`;
+      lista.appendChild(li);
+    }
+    document.getElementById('areaTotal').textContent = `Área techada aprox.: ${total.toFixed(2).replace('.', ',')} m² · Lote: ${(D.lote[2] * D.lote[3]).toFixed(2).replace('.', ',')} m²`;
+
+    // --- Exteriores: jardín, vereda, jardín exterior y árboles ---
+    for (const e of D.exteriores) {
+      const [x1, z1, x2, z2] = e.rect;
+      caja(capas.exteriores, x1, z1, x2, z2, 0, e.tipo === 'vereda' ? 0.05 : 0.02, mat(e.color), false);
+      capas.etiquetas.add(etiqueta(e.nombre, '', (x1 + x2) / 2, 0.3, (z1 + z2) / 2, 'ext'));
+    }
+    for (const t of D.arboles) {
+      const [x, z] = P(...t.c);
+      const tronco = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 1.2, 10), mat('#7c5a3a'));
+      tronco.position.set(x, 0.6, z); tronco.castShadow = true;
+      const copa = new THREE.Mesh(new THREE.SphereGeometry(t.r * 1.6, 18, 14), mat('#5f9e57'));
+      copa.position.set(x, 1.2 + t.r, z); copa.castShadow = true; copa.receiveShadow = true;
+      capas.exteriores.add(tronco, copa);
+    }
+
+    // --- Muros con vanos ---
+    const matMuro = mat('#f4f1ea'), matTope = mat('#6b7280');
+    const matVidrio = new THREE.MeshStandardMaterial({ color: '#9fd3f0', transparent: true, opacity: 0.38, roughness: 0.05, metalness: 0.1, depthWrite: false });
+    const matMarco = mat('#374151', { roughness: 0.5 });
+    const enSegmento = (p, s) => {
+      const [x1, y1, x2, y2] = s;
+      const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+      const t = ((p[0] - x1) * dx + (p[1] - y1) * dy) / (L * L);
+      const qx = x1 + t * dx, qy = y1 + t * dy;
+      return t >= -1e-6 && t <= 1 + 1e-6 && Math.hypot(p[0] - qx, p[1] - qy) < 1e-3;
+    };
+    // tramo de muro en coordenadas a lo largo del eje (u1..u2), con altura y1..y2
+    function tramo(s, u1, u2, y1, y2, material, grueso = T) {
+      const [x1, z1, x2, z2] = s, L = Math.hypot(x2 - x1, z2 - z1);
+      const ux = (x2 - x1) / L, uz = (z2 - z1) / L;
+      const ax = x1 + ux * u1, az = z1 + uz * u1, bx = x1 + ux * u2, bz = z1 + uz * u2;
+      const horizontal = Math.abs(uz) < 1e-6;
+      const h = grueso / 2;
+      return horizontal ? caja(capas.muros, Math.min(ax, bx), az - h, Math.max(ax, bx), az + h, y1, y2, material)
+                        : caja(capas.muros, ax - h, Math.min(az, bz), ax + h, Math.max(az, bz), y1, y2, material);
+    }
+    for (const s of D.muros) {
+      const [x1, z1, x2, z2] = s, L = Math.hypot(x2 - x1, z2 - z1);
+      const otros = D.muros.filter(o => o !== s);
+      // prolongar extremos que llegan a otro muro (equivale a stroke-linecap="square")
+      const e1 = otros.some(o => enSegmento([x1, z1], o)) ? T / 2 : 0;
+      const e2 = otros.some(o => enSegmento([x2, z2], o)) ? T / 2 : 0;
+      // ventanas sobre este muro
+      const vanos = D.ventanas.filter(v => enSegmento([v[0], v[1]], s) && enSegmento([v[2], v[3]], s))
+        .map(v => {
+          const ux = (x2 - x1) / L, uz = (z2 - z1) / L;
+          const a = (v[0] - x1) * ux + (v[1] - z1) * uz, b = (v[2] - x1) * ux + (v[3] - z1) * uz;
+          return [Math.min(a, b), Math.max(a, b)];
+        }).sort((p, q) => p[0] - q[0]);
+      let u = -e1;
+      for (const [a, b] of vanos) {
+        tramo(s, u, a, 0, H, matMuro);
+        tramo(s, a, b, 0, D.ventana.alfeizar, matMuro);              // antepecho
+        tramo(s, a, b, D.ventana.dintel, H, matMuro);                // dintel
+        tramo(s, a, b, D.ventana.alfeizar, D.ventana.dintel, matVidrio, 0.02).castShadow = false;
+        tramo(s, a, b, D.ventana.alfeizar - 0.03, D.ventana.alfeizar, matMarco, T + 0.03);   // repisa
+        tramo(s, a, a + 0.04, D.ventana.alfeizar, D.ventana.dintel, matMarco, 0.06);
+        tramo(s, b - 0.04, b, D.ventana.alfeizar, D.ventana.dintel, matMarco, 0.06);
+        tramo(s, (a + b) / 2 - 0.02, (a + b) / 2 + 0.02, D.ventana.alfeizar, D.ventana.dintel, matMarco, 0.05);
+        u = b;
+      }
+      tramo(s, u, L + e2, 0, H, matMuro);
+      tramo(s, -e1, L + e2, H - 0.01, H + 0.005, matTope).castShadow = false;   // remate superior
+    }
+
+    // --- Puertas: dintel sobre el vano y hoja abierta según el plano ---
+    const matHoja = mat('#9a6b42', { roughness: 0.6 }), matPorton = mat('#4b5563', { roughness: 0.4, metalness: 0.5 });
+    const dinteles = new Set();
+    for (const p of D.puertas) {
+      const alto = p.tipo === 'porton' ? 2.3 : D.puertaAlto;
+      const [bx, bz] = p.bisagra, [cx, cz] = p.cierre, [tx, tz] = p.punta;
+      const clave = [Math.min(bx, cx), Math.min(bz, cz), Math.max(bx, cx), Math.max(bz, cz)].join();
+      if (p.tipo === 'puerta' && !dinteles.has(clave)) {
+        dinteles.add(clave);
+        tramo([bx, bz, cx, cz], 0, Math.hypot(cx - bx, cz - bz), alto, H, matMuro);
+      }
+      // hoja: de la bisagra a la punta, desplazada hacia el lado del vano para no quedar dentro del muro
+      const L = Math.hypot(tx - bx, tz - bz), ux = (tx - bx) / L, uz = (tz - bz) / L;
+      const nx = Math.sign(cx - bx), nz = Math.sign(cz - bz);
+      const off = T / 2 + 0.03;
+      const hoja = [bx + nx * off, bz + nz * off, tx + nx * off, tz + nz * off];
+      tramo(hoja, 0.03, L - 0.02, 0.01, alto, p.tipo === 'porton' ? matPorton : matHoja, 0.04);
+    }
+    // viga sobre el portón de la cochera
+    const port = D.puertas.filter(p => p.tipo === 'porton');
+    if (port.length) caja(capas.muros, 0, D.lote[3] - T / 2, 3.0, D.lote[3] + T / 2, 2.3, H, matMuro);
+
+    // --- Escalera en lavandería (flecha del plano hacia +x) ---
+    {
+      const [x1, z1, x2, z2] = D.escalera.rect, n = D.escalera.pasos, paso = (x2 - x1) / n, sube = 2.4 / n;
+      for (let i = 0; i < n; i++) caja(capas.mobiliario, x1 + i * paso, z1, x1 + (i + 1) * paso, z2, 0, sube * (i + 1), mat('#cbd5e1'));
+    }
+
+    // --- Mobiliario ---
+    for (const f of D.mobiliario) {
+      const [x1, z1, x2, z2] = f.rect;
+      if (f.nombre === 'Auto') {
+        caja(capas.mobiliario, x1, z1 + 0.15, x2, z2 - 0.15, 0.15, 0.85, mat(f.color, { roughness: 0.35, metalness: 0.4 }));
+        caja(capas.mobiliario, x1 + 0.08, z1 + 0.85, x2 - 0.08, z2 - 0.75, 0.85, f.alto, mat('#334155', { roughness: 0.2, metalness: 0.3 }));
+        for (const [wx, wz] of [[x1, z1 + 0.5], [x2, z1 + 0.5], [x1, z2 - 0.5], [x2, z2 - 0.5]]) {
+          const r = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.18, 18), mat('#1f2937'));
+          const [sx, sz] = P(wx, wz); r.rotation.z = Math.PI / 2; r.position.set(sx, 0.3, sz); r.castShadow = true;
+          capas.mobiliario.add(r);
+        }
+        continue;
+      }
+      caja(capas.mobiliario, x1, z1, x2, z2, 0.03, 0.03 + f.alto, mat(f.color));
+      if (f.nombre === 'Cama') caja(capas.mobiliario, x1 + 0.08, z1 + 0.12, x2 - 0.08, z1 + 0.45, 0.58, 0.68, mat('#ffffff'));
+    }
+
+    // --- Techo: losa plana sobre la huella techada ---
+    const matLosa = mat('#d6d3d1');
+    caja(capas.techo, -T / 2, -T / 2, D.lote[2] + T / 2, 13.5 + T / 2, H, H + 0.2, matLosa);
+    caja(capas.techo, -T / 2, 13.5, 3.0 + T / 2, D.lote[3] + T / 2, H, H + 0.2, matLosa);
+    capas.techo.visible = false;
+
+    // --- Interfaz ---
+    document.querySelectorAll('[data-capa]').forEach(cb => cb.addEventListener('change', () => {
+      capas[cb.dataset.capa].visible = cb.checked;
+      if (cb.dataset.capa === 'etiquetas') etiquetasRenderer.domElement.style.display = cb.checked ? '' : 'none';
+    }));
+    const botones = document.querySelectorAll('.btn-vista');
+    function ponerVista(v) {
+      botones.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vista === v)));
+      document.getElementById('modoTexto').textContent = v === 'planta' ? 'Planta' : 'Vista 3D';
+      if (v === 'planta') vistaPlanta(); else vista3D();
+      const cbTecho = document.querySelector('[data-capa="techo"]');
+      capas.techo.visible = v === 'planta' ? false : cbTecho.checked;
+      cbTecho.disabled = v === 'planta';
+      sol.castShadow = v !== 'planta';          // planta limpia, sin sombras proyectadas
+    }
+    botones.forEach(b => b.addEventListener('click', () => ponerVista(b.dataset.vista)));
+    document.getElementById('btnReset').addEventListener('click', () => ponerVista(modo));
+    document.getElementById('btnPanel').addEventListener('click', () => document.getElementById('panel').classList.toggle('-translate-x-full'));
+
+    function redimensionar() {
+      const w = cont.clientWidth, h = cont.clientHeight;
+      renderer.setSize(w, h); etiquetasRenderer.setSize(w, h);
+      persp.aspect = w / h; persp.updateProjectionMatrix();
+      ajustarOrto();
+    }
+    new ResizeObserver(redimensionar).observe(cont);
+    redimensionar();
+
+    const inicial = new URLSearchParams(location.search).get('vista') === 'planta' ? 'planta' : '3d';
+    ponerVista(inicial);
+    document.getElementById('cargando').remove();
+
+    renderer.setAnimationLoop(() => {
+      controles.update();
+      renderer.render(scene, camara);
+      etiquetasRenderer.render(scene, camara);
+    });
+    window.__modeloListo = true;
+  </script>
+  <script>
+    // Aviso si three.js no carga (sin conexión o CDN bloqueado)
+    setTimeout(() => {
+      if (!window.__modeloListo) {
+        const c = document.getElementById('cargando'); if (c) c.remove();
+        const e = document.getElementById('error');
+        e.textContent = 'No se pudo cargar three.js desde la CDN. Revisa tu conexión y recarga la página.';
+        e.classList.remove('hidden');
+      }
+    }, 15000);
+  </script>
+</body>
+</html>
