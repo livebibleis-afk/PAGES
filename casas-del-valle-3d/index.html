@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Casas del Valle — Casa Individual 3D</title>
+  <style>
+    :root {
+      --bg: #d9e4ee;
+      --panel: rgba(20, 18, 16, 0.78);
+      --panel-2: rgba(20, 18, 16, 0.55);
+      --text: #f7f3ee;
+      --muted: #d6d0c8;
+      --accent: #c9843a;
+      --accent-2: #e8d2a8;
+      --btn: #2a2622;
+      --btn-on: #c9843a;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-t: env(safe-area-inset-top, 0px);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text); }
+    #c { position: fixed; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; }
+    .top {
+      position: fixed; left: 12px; right: 12px; top: calc(10px + var(--safe-t));
+      display: flex; justify-content: space-between; gap: 10px; pointer-events: none; z-index: 5;
+    }
+    .brand, .note {
+      pointer-events: auto;
+      background: var(--panel); backdrop-filter: blur(10px);
+      border-radius: 14px; padding: 10px 14px; max-width: min(72vw, 420px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.22);
+    }
+    .brand h1 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: .01em; }
+    .brand p { margin: 3px 0 0; font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+    .note { max-width: min(46vw, 260px); font-size: 11px; color: var(--muted); line-height: 1.35; }
+    .note strong { color: var(--accent-2); font-weight: 600; }
+    .bar {
+      position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: calc(14px + var(--safe-b));
+      display: flex; gap: 8px; z-index: 5; padding: 6px;
+      background: var(--panel); border-radius: 999px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.28);
+    }
+    .bar button {
+      appearance: none; border: 0; color: var(--text);
+      background: var(--btn); border-radius: 999px;
+      padding: 12px 16px; font-size: 14px; font-weight: 600;
+      min-width: 64px; min-height: 44px;
+      cursor: pointer;
+    }
+    .bar button.on { background: var(--btn-on); color: #1c140c; }
+    .legend {
+      position: fixed; left: 12px; bottom: calc(78px + var(--safe-b));
+      background: var(--panel-2); backdrop-filter: blur(8px);
+      border-radius: 12px; padding: 8px 12px; font-size: 11px; color: var(--muted);
+      line-height: 1.45; z-index: 5;
+    }
+    .sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+    @media (max-width: 640px) {
+      .note { display: none; }
+      .brand h1 { font-size: 13.5px; }
+      .bar button { padding: 11px 13px; font-size: 13px; min-width: 56px; }
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div class="top">
+    <div class="brand">
+      <h1>Condominio Casas del Valle</h1>
+      <p>Casa Individual · 3er piso (futura ampliación) · ESC 1/50<br>
+         Huella 5.30 × 9.40 m · NPT 1° +0.15 · 2° +2.57 · 3° +4.99 · techo +7.41</p>
+    </div>
+    <div class="note">
+      <strong>Pisos 1 y 2:</strong> este plano no trae su distribución. Se muestran como volumen con la misma huella cubierta del 3er piso (5.30 × 7.60 m), sin tabiques.
+    </div>
+  </div>
+  <div class="legend">
+    <div><span class="sw" style="background:#c4a574"></span>1° y 2° (volumen estimado)</div>
+    <div><span class="sw" style="background:#efe6d6"></span>3er piso (según plano)</div>
+    <div><span class="sw" style="background:#8d8a83"></span>Terraza y parapeto 18 cm</div>
+    <div>Gira con un dedo · zoom con dos dedos</div>
+  </div>
+  <div class="bar" role="tablist" aria-label="Pisos">
+    <button data-floor="1">Piso 1</button>
+    <button data-floor="2">Piso 2</button>
+    <button data-floor="3">Piso 3</button>
+    <button data-floor="all" class="on">Todo</button>
+  </div>
+  <script type="module">
+const MODEL = {"meta":{"project":"CONDOMINIO CASAS DEL VALLE","subtitle":"LOTES TÍPICOS DE VIVIENDA UNIFAMILIAR — Casa Individual","source":"PLANO_Original_valle.dwg (AC1027)","units":"meters (INSUNITS was 4=mm, but all dimensions and NPT marks are in meters)","origin_cad":[988.1175,2282.9227],"footprint_m":[5.3,9.4],"levels_m":{"ground":0.0,"p1":0.15,"p2":2.57,"p3":4.99,"roof":7.41},"floor_to_floor_m":2.42,"assumptions":{"slab_thickness_m":0.12,"slab_note":"No hay cota de espesor de losa de piso. Las puertas del 3er piso miden 2.30 m y la distancia NPT a NPT es 2.42 m, así que se usa losa de 0.12 m para que la puerta quepa bajo el cielo. En techos el plano indica viga invertida H=30 cm y parapeto H=18 cm.","muro_bajo_h_m":1.0,"pisos_1_y_2":"Este DWG no trae la distribución arquitectónica del 1° ni del 2° piso (solo el tercer piso / futura ampliación, techos, instalaciones del 3° e estructuras/cimentación). Los pisos 1 y 2 se modelan como volumen con la misma huella exterior del 3° piso, sin tabiquería interior."}},"rooms":[{"name":"DORM. 4","x":1.928,"z":2.9694},{"name":"BAÑO","x":3.6773,"z":1.5842},{"name":"ESTAR","x":1.8801,"z":5.1435},{"name":"ESTUDIO","x":4.025,"z":6.5595}],"walls_p3_full":[{"exterior":[[3.05,0.4066],[3.15,0.4066],[3.15,0.3],[2.55,0.3],[2.55,0.4],[3.05,0.4],[3.05,0.4066]],"holes":[],"area":0.0607},{"exterior":[[3.05,1.4191],[3.15,1.4191],[3.15,0.6266],[3.05,0.6266],[3.05,1.4191]],"holes":[],"area":0.0793},{"exterior":[[3.05,2.7],[3.15,2.7],[3.15,2.1391],[3.05,2.1391],[3.05,2.7]],"holes":[],"area":0.0561},{"exterior":[[0.0,3.6],[0.0,6.45],[0.0062,6.45],[0.0,6.55],[0.14,6.55],[0.14,6.0],[0.385,6.0],[0.385,0.85],[0.3511,0.85],[0.255,2.4104],[0.255,0.85],[0.14,0.85],[0.14,0.4],[0.0,0.4],[0.0,3.5],[0.1879,3.5],[0.1817,3.6],[0.0,3.6]],"holes":[],"area":2.029},{"exterior":[[0.545,3.6],[2.74,3.6],[2.74,3.5],[0.545,3.5],[0.545,0.85],[0.415,0.85],[0.415,6.0],[0.545,6.0],[0.545,3.6]],"holes":[],"area":0.889},{"exterior":[[3.05,6.45],[2.55,6.45],[2.55,6.55],[3.15,6.55],[3.15,5.41],[3.05,5.41],[3.05,6.45]],"holes":[],"area":0.164},{"exterior":[[5.3,0.0],[4.915,0.0],[4.915,7.6],[5.3,7.6],[5.3,5.0],[5.3,5.0],[5.3,2.9506],[5.3,0.0]],"holes":[],"area":2.926},{"exterior":[[4.755,1.55],[3.85,1.55],[3.85,1.65],[4.755,1.65],[4.755,5.0],[3.95,5.0],[3.95,5.1],[4.755,5.1],[4.755,7.5],[3.135,7.5],[3.135,7.6],[4.885,7.6],[4.885,0.0],[2.95,0.0],[2.95,0.1],[4.755,0.1],[4.755,1.55]],"holes":[],"area":1.5015}],"walls_p3_bajo":[{"exterior":[[3.05,0.1],[2.95,0.1],[2.95,0.3],[3.05,0.3],[3.05,0.1]],"holes":[],"area":0.02},{"exterior":[[1.76,0.4],[2.55,0.4],[2.55,0.3],[1.76,0.3],[1.76,0.4]],"holes":[],"area":0.079},{"exterior":[[1.76,6.55],[2.55,6.55],[2.55,6.45],[1.76,6.45],[1.76,6.55]],"holes":[],"area":0.079},{"exterior":[[2.75,6.95],[2.75,6.55],[2.65,6.55],[2.65,6.95],[2.75,6.95]],"holes":[],"area":0.04},{"exterior":[[0.45,8.95],[0.45,7.1],[0.35,7.1],[0.35,8.95],[0.45,8.95]],"holes":[],"area":0.185},{"exterior":[[4.95,8.95],[4.95,7.6],[4.85,7.6],[4.85,8.95],[4.95,8.95]],"holes":[],"area":0.135},{"exterior":[[0.0,9.05],[0.35,9.4],[0.35,9.05],[0.0,9.05]],"holes":[],"area":0.0613},{"exterior":[[5.3,9.05],[4.95,9.05],[4.95,9.4],[5.3,9.05]],"holes":[],"area":0.0612},{"exterior":[[0.45,9.05],[0.45,9.4],[4.85,9.4],[4.85,9.05],[0.45,9.05]],"holes":[],"area":1.54}],"slab_covered":[{"exterior":[[2.95,0.0],[0.385,0.3],[0.0,0.4],[0.0,3.5],[0.0,3.6],[0.0,6.45],[0.0,6.55],[0.35,7.6503],[4.95,7.6503],[5.3,7.6],[5.3,5.0],[5.3,0.0],[2.95,0.0]],"holes":[],"area":39.8257}],"slab_full":[{"exterior":[[2.95,0.0],[0.385,0.3],[0.0,0.4],[0.0,3.5],[0.0,3.6],[0.0,9.05],[0.35,9.4],[0.45,9.4],[4.95,9.4],[5.3,9.05],[5.3,8.95],[5.3,5.0],[5.3,0.0],[2.95,0.0]],"holes":[],"area":49.178}],"terrace":[{"exterior":[[0.0,9.05],[0.35,9.4],[0.45,9.4],[4.95,9.4],[5.3,9.05],[5.3,8.95],[5.3,7.6101],[4.9514,7.6602],[4.95,7.6603],[0.35,7.6603],[0.349,7.6602],[0.3481,7.6601],[0.3471,7.6599],[0.3462,7.6595],[0.3453,7.6591],[0.3445,7.6586],[0.3437,7.6581],[0.343,7.6574],[0.3423,7.6567],[0.3417,7.6559],[0.3412,7.6551],[0.3408,7.6542],[0.3405,7.6533],[0.0,6.583],[0.0,9.05]],"holes":[],"area":9.2913}],"openings":[{"kind":"window","x":2.65,"z":7.5,"ux":-1.0,"uz":0.0,"nx":-0.0,"nz":-1.0,"width":0.95,"height":1.3,"sill":1.0,"wall_kind":"full"},{"kind":"window","x":0.95,"z":6.55,"ux":1.0,"uz":0.0,"nx":-0.0,"nz":1.0,"width":1.6,"height":1.3,"sill":1.0,"wall_kind":"full"},{"kind":"window","x":0.95,"z":0.3,"ux":-1.0,"uz":0.0,"nx":-0.0,"nz":-1.0,"width":1.6,"height":1.3,"sill":1.0,"wall_kind":"full"},{"kind":"window","x":3.15,"z":0.5166,"ux":0.0,"uz":-1.0,"nx":1.0,"nz":0.0,"width":0.2,"height":1.22,"sill":1.0,"wall_kind":"full"},{"kind":"door","x":3.15,"z":1.7791,"ux":0.0,"uz":-1.0,"nx":1.0,"nz":0.0,"width":0.7,"height":2.3,"sill":0.0,"wall_kind":"full"},{"kind":"door","x":3.15,"z":3.5,"ux":-1.0,"uz":0.0,"nx":-0.0,"nz":-1.0,"width":0.8,"height":2.3,"sill":0.0,"wall_kind":"full"},{"kind":"door","x":3.15,"z":5.0,"ux":-0.0,"uz":-1.0,"nx":1.0,"nz":-0.0,"width":0.8,"height":2.3,"sill":0.0,"wall_kind":"full"}],"props":[{"kind":"sanitario","name":"A$C2E006BFB","x":4.755,"z":1.15,"rot":3.1416},{"kind":"sanitario","name":"MAN_Planta","x":3.535,"z":0.0653,"rot":3.1416},{"kind":"mueble","name":"A$C58BD18A9","x":0.55,"z":5.3025,"rot":1.5708},{"kind":"mueble","name":"A$C0A2A5401","x":1.925,"z":3.6,"rot":0.0},{"kind":"mueble","name":"A$C64D726EF","x":2.75,"z":6.55,"rot":1.5708}],"shell_lower":[{"exterior":[[0.385,0.3],[0.0,0.4],[0.0,3.5],[0.0,3.6],[0.0,6.45],[0.0,6.55],[0.35,7.6503],[4.95,7.6503],[5.3,7.6],[5.3,5.0],[5.3,0.0],[2.95,0.0],[0.385,0.3]],"holes":[[[5.05,0.25],[5.05,5.0],[5.05,7.3834],[4.9321,7.4003],[0.5328,7.4003],[0.25,6.5112],[0.25,6.45],[0.25,3.6],[0.25,3.5],[0.25,0.5934],[0.4312,0.5463],[2.9646,0.25],[5.05,0.25]]],"area":6.0643}],"slab_lower":[{"exterior":[[2.95,0.0],[0.385,0.3],[0.0,0.4],[0.0,3.5],[0.0,3.6],[0.0,6.45],[0.0,6.55],[0.35,7.6503],[4.95,7.6503],[5.3,7.6],[5.3,5.0],[5.3,0.0],[2.95,0.0]],"holes":[],"area":39.8257}]};
+
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    const canvas = document.getElementById("c");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setClearColor(0xd9e4ee, 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0xd9e4ee, 28, 70);
+
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.08, 200);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = 4;
+    controls.maxDistance = 40;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.target.set(2.65, 3.6, 4.7);
+    camera.position.set(-8.5, 9.5, 16.5);
+    controls.update();
+
+    // lights
+    scene.add(new THREE.AmbientLight(0xf2efe8, 0.55));
+    const hemi = new THREE.HemisphereLight(0xe8f0f8, 0x8a7a64, 0.7);
+    scene.add(hemi);
+    const sun = new THREE.DirectionalLight(0xfff3de, 1.35);
+    sun.position.set(-8, 16, 9);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 40;
+    sun.shadow.camera.left = -16;
+    sun.shadow.camera.right = 16;
+    sun.shadow.camera.top = 16;
+    sun.shadow.camera.bottom = -16;
+    sun.shadow.bias = -0.00025;
+    scene.add(sun);
+    const fill = new THREE.DirectionalLight(0xc9d8ea, 0.35);
+    fill.position.set(10, 6, -8);
+    scene.add(fill);
+
+    // ground
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(28, 64),
+      new THREE.MeshStandardMaterial({ color: 0xb7c4a6, roughness: 1, metalness: 0 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+    const grid = new THREE.GridHelper(30, 30, 0x8a9a78, 0xc3cdb6);
+    grid.position.y = 0.002;
+    scene.add(grid);
+
+    // materials
+    const mat = {
+      exist: new THREE.MeshStandardMaterial({ color: 0xc4a574, roughness: 0.86, metalness: 0.02 }),
+      existDark: new THREE.MeshStandardMaterial({ color: 0xa88858, roughness: 0.88, metalness: 0.02 }),
+      amp: new THREE.MeshStandardMaterial({ color: 0xefe6d6, roughness: 0.78, metalness: 0.03 }),
+      ampEdge: new THREE.MeshStandardMaterial({ color: 0xd9ccb6, roughness: 0.8, metalness: 0.03 }),
+      slab: new THREE.MeshStandardMaterial({ color: 0x9a958c, roughness: 0.7, metalness: 0.05 }),
+      slabExist: new THREE.MeshStandardMaterial({ color: 0x8a8378, roughness: 0.72, metalness: 0.05 }),
+      roof: new THREE.MeshStandardMaterial({ color: 0x8d8a83, roughness: 0.65, metalness: 0.08 }),
+      terrace: new THREE.MeshStandardMaterial({ color: 0xb7c4a3, roughness: 0.85, metalness: 0.02 }),
+      parapet: new THREE.MeshStandardMaterial({ color: 0xe7e0d4, roughness: 0.8, metalness: 0.03 }),
+      glass: new THREE.MeshStandardMaterial({
+        color: 0x9ec4d8, roughness: 0.08, metalness: 0.15,
+        transparent: true, opacity: 0.45, side: THREE.DoubleSide,
+      }),
+      frame: new THREE.MeshStandardMaterial({ color: 0x3f3a34, roughness: 0.55, metalness: 0.1 }),
+      door: new THREE.MeshStandardMaterial({ color: 0x6b3f24, roughness: 0.6, metalness: 0.05 }),
+      plinth: new THREE.MeshStandardMaterial({ color: 0x8b8680, roughness: 0.9, metalness: 0.02 }),
+      fixture: new THREE.MeshStandardMaterial({ color: 0xd9d4cc, roughness: 0.5, metalness: 0.1 }),
+    };
+
+    const NPT = MODEL.meta.levels_m;
+    const SLAB = MODEL.meta.assumptions.slab_thickness_m;
+    const PARAPETO = 0.18;
+    const groups = { 1: new THREE.Group(), 2: new THREE.Group(), 3: new THREE.Group(), labels: new THREE.Group() };
+    groups[1].name = "piso1"; groups[2].name = "piso2"; groups[3].name = "piso3";
+    scene.add(groups[1], groups[2], groups[3], groups.labels);
+
+    function shapeFromRing(ring) {
+      // Negate Y so that after ExtrudeGeometry + rotateX(-90°) world Z stays +Z.
+      const s = new THREE.Shape();
+      const ext = ring.exterior;
+      s.moveTo(ext[0][0], -ext[0][1]);
+      for (let i = 1; i < ext.length; i++) s.lineTo(ext[i][0], -ext[i][1]);
+      s.closePath();
+      for (const hole of (ring.holes || [])) {
+        if (!hole.length) continue;
+        const p = new THREE.Path();
+        p.moveTo(hole[0][0], -hole[0][1]);
+        for (let i = 1; i < hole.length; i++) p.lineTo(hole[i][0], -hole[i][1]);
+        p.closePath();
+        s.holes.push(p);
+      }
+      return s;
+    }
+
+    function extrudeRings(rings, z0, height, material, group, shadow = true) {
+      if (!rings || !rings.length || height <= 0.001) return;
+      for (const ring of rings) {
+        if (!ring.exterior || ring.exterior.length < 3) continue;
+        const geo = new THREE.ExtrudeGeometry(shapeFromRing(ring), {
+          depth: height, bevelEnabled: false, curveSegments: 1, steps: 1,
+        });
+        geo.rotateX(-Math.PI / 2);
+        const mesh = new THREE.Mesh(geo, material);
+        mesh.position.y = z0;
+        mesh.castShadow = shadow;
+        mesh.receiveShadow = true;
+        group.add(mesh);
+      }
+    }
+
+    function addBox(group, x, y, z, sx, sy, sz, material, rotY = 0) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material);
+      m.position.set(x, y, z);
+      m.rotation.y = rotY;
+      m.castShadow = true;
+      m.receiveShadow = true;
+      group.add(m);
+      return m;
+    }
+
+    // --- Lower floors (schematic shell) ---
+    function addLowerFloor(n, group) {
+      const z0 = n === 1 ? NPT.p1 : NPT.p2;
+      const z1 = n === 1 ? NPT.p2 : NPT.p3;
+      const wallH = (z1 - z0) - SLAB;
+      extrudeRings(MODEL.shell_lower, z0, wallH, n === 1 ? mat.exist : mat.existDark, group);
+      extrudeRings(MODEL.slab_lower, z1 - SLAB, SLAB, mat.slabExist, group, false);
+      // No se inventan vanos en 1° y 2°: el DWG no trae esas plantas.
+    }
+
+    function addOpeningGlass(group, x, z, nx, nz, width, height, sillY, isDoor) {
+      // Mesh faces +Z by default; lookAt the outward normal so width stays along the wall.
+      const nlen = Math.hypot(nx, nz) || 1;
+      nx /= nlen; nz /= nlen;
+      const y = sillY + height / 2;
+      const cx = x + nx * 0.04, cz = z + nz * 0.04;
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(width + 0.06, height + 0.06, 0.06), mat.frame);
+      frame.position.set(x, y, z);
+      frame.lookAt(x + nx, y, z + nz);
+      frame.castShadow = true;
+      group.add(frame);
+      const fillMat = isDoor ? mat.door : mat.glass;
+      const fill = new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.05, width - 0.05), Math.max(0.05, height - 0.05), 0.04), fillMat);
+      fill.position.set(cx, y, cz);
+      fill.lookAt(cx + nx, y, cz + nz);
+      fill.castShadow = true;
+      group.add(fill);
+    }
+
+    addLowerFloor(1, groups[1]);
+    addLowerFloor(2, groups[2]);
+
+    // plinth / ground slab
+    extrudeRings(MODEL.slab_lower, 0, NPT.p1, mat.plinth, groups[1], false);
+
+    // --- Third floor (from the architectural plan) ---
+    const p3 = NPT.p3;
+    const p3Top = NPT.roof;
+    const p3WallH = (p3Top - p3) - SLAB;
+    extrudeRings(MODEL.walls_p3_full, p3, p3WallH, mat.amp, groups[3]);
+    extrudeRings(MODEL.walls_p3_bajo, p3, Math.min(1.0, p3WallH), mat.ampEdge, groups[3]);
+    // roof slab on covered area
+    extrudeRings(MODEL.slab_covered, p3Top - SLAB, SLAB, mat.roof, groups[3], false);
+    // terrace floor at NPT roof as well (walking roof / open terrace)
+    if (MODEL.terrace && MODEL.terrace.length) {
+      extrudeRings(MODEL.terrace, p3Top - SLAB, SLAB, mat.terrace, groups[3], false);
+    }
+    // parapet 18 cm around terrace + roof outer edge: use bajo uncut rings that sit at the terrace,
+    // plus a thin wall along the covered roof perimeter.
+    // Approximate: muro bajo already includes terrace parapets — extrude the leftover bajo
+    // that is above the roof? In plan, A_Muro Bajo is terrace walls sitting on piso 3.
+    // Additionally a 0.18 parapet on the roof slab:
+    if (MODEL.slab_covered && MODEL.slab_covered.length) {
+      for (const ring of MODEL.slab_covered) {
+        const outer = ring.exterior;
+        // build a thin ring by leaving the shape and a slightly inset hole
+        const s = new THREE.Shape();
+        s.moveTo(outer[0][0], -outer[0][1]);
+        for (let i = 1; i < outer.length; i++) s.lineTo(outer[i][0], -outer[i][1]);
+        s.closePath();
+        let minX = Infinity, minZ = Infinity, maxX = -Infinity, maxZ = -Infinity;
+        for (const p of outer) { minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]); minZ = Math.min(minZ, p[1]); maxZ = Math.max(maxZ, p[1]); }
+        const t = 0.10;
+        const hole = new THREE.Path();
+        hole.moveTo(minX + t, -(minZ + t));
+        hole.lineTo(maxX - t, -(minZ + t));
+        hole.lineTo(maxX - t, -(maxZ - t));
+        hole.lineTo(minX + t, -(maxZ - t));
+        hole.closePath();
+        s.holes.push(hole);
+        const geo = new THREE.ExtrudeGeometry(s, { depth: PARAPETO, bevelEnabled: false, steps: 1 });
+        geo.rotateX(-Math.PI / 2);
+        const mesh = new THREE.Mesh(geo, mat.parapet);
+        mesh.position.y = p3Top;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        groups[3].add(mesh);
+      }
+    }
+    // piso 3 slab under walls (floor finish)
+    extrudeRings(MODEL.slab_full, p3 - 0.02, 0.04, mat.slab, groups[3], false);
+
+    // openings of piso 3 (doors / windows) — walls already have holes
+    for (const op of MODEL.openings) {
+      const sillY = p3 + (op.sill || 0);
+      addOpeningGlass(groups[3], op.x, op.z, op.nx, op.nz, op.width, op.height, sillY, op.kind === "door");
+    }
+
+    // simple bathroom fixtures (boxes) if props exist
+    for (const p of (MODEL.props || [])) {
+      if (p.kind === "sanitario") {
+        addBox(groups[3], p.x, p3 + 0.20, p.z, 0.55, 0.40, 0.70, mat.fixture, p.rot || 0);
+      }
+    }
+
+    // room labels as sprites
+    function makeLabel(text, x, y, z) {
+      const cv = document.createElement("canvas");
+      cv.width = 512; cv.height = 128;
+      const ctx = cv.getContext("2d");
+      ctx.clearRect(0, 0, 512, 128);
+      ctx.fillStyle = "rgba(28, 20, 12, 0.72)";
+      roundRect(ctx, 16, 24, 480, 80, 22);
+      ctx.fill();
+      ctx.font = "600 52px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      ctx.fillStyle = "#f7f3ee";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, 256, 64);
+      const tex = new THREE.CanvasTexture(cv);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+      spr.position.set(x, y, z);
+      spr.scale.set(2.2, 0.55, 1);
+      spr.userData.isLabel = true;
+      groups.labels.add(spr);
+    }
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+    for (const r of MODEL.rooms) {
+      makeLabel(r.name, r.x, p3 + 1.55, r.z);
+    }
+    makeLabel("Terraza", 2.65, p3 + 1.15, 8.4);
+
+    // floor visibility
+    let mode = "all";
+    function setFloor(id) {
+      mode = id;
+      groups[1].visible = (id === "all" || id === "1");
+      groups[2].visible = (id === "all" || id === "2");
+      groups[3].visible = (id === "all" || id === "3");
+      groups.labels.visible = (id === "all" || id === "3");
+      document.querySelectorAll(".bar button").forEach((b) => {
+        b.classList.toggle("on", b.dataset.floor === String(id));
+      });
+    }
+    document.querySelectorAll(".bar button").forEach((b) => {
+      b.addEventListener("click", () => setFloor(b.dataset.floor === "all" ? "all" : b.dataset.floor));
+    });
+
+    // optional clipping cutaway (for screenshots / study)
+    const clipPlane = new THREE.Plane(new THREE.Vector3(0.35, 0, -0.6).normalize(), 3.2);
+    function setCutaway(on) {
+      const planes = on ? [clipPlane] : [];
+      renderer.clippingPlanes = planes;
+      renderer.localClippingEnabled = on;
+      scene.traverse((o) => {
+        if (o.isMesh && o.material) {
+          const mats = Array.isArray(o.material) ? o.material : [o.material];
+          mats.forEach((m) => { m.clippingPlanes = planes; m.clipShadows = on; m.needsUpdate = true; });
+        }
+      });
+    }
+
+    function setCameraView(name) {
+      if (name === "exterior") {
+        setFloor("all");
+        setCutaway(false);
+        camera.position.set(-8.8, 9.8, 16.8);
+        controls.target.set(2.65, 3.7, 4.6);
+      } else if (name === "cutaway") {
+        setFloor("all");
+        setCutaway(true);
+        camera.position.set(-3.2, 11.2, 14.5);
+        controls.target.set(2.7, 3.8, 4.2);
+      } else if (name === "piso3") {
+        setFloor("3");
+        setCutaway(false);
+        camera.position.set(-6.5, 11.5, 13.2);
+        controls.target.set(2.65, 6.1, 4.6);
+      }
+      controls.update();
+    }
+
+    // URL flags for screenshots and iPhone deep links
+    const params = new URLSearchParams(location.search);
+    const view = params.get("view");
+    if (view) setCameraView(view);
+    if (params.get("floor")) setFloor(params.get("floor") === "all" ? "all" : params.get("floor"));
+    if (params.get("cutaway") === "1") setCutaway(true);
+
+    function resize() {
+      const w = innerWidth, h = innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false);
+    }
+    addEventListener("resize", resize, { passive: true });
+    resize();
+
+    (function loop() {
+      requestAnimationFrame(loop);
+      controls.update();
+      renderer.render(scene, camera);
+    })();
+
+    // expose for headless screenshots
+    window.__house = { setFloor, setCutaway, setCameraView, renderer, camera, controls, scene };
+  </script>
+</body>
+</html>
