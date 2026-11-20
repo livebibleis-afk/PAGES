@@ -75,7 +75,7 @@
 <body>
 <header>
   <h1>📜 Biblia Código</h1>
-  <span>Terminal · Consulta la Biblia (RVR 1909) mediante comandos</span>
+  <span>Terminal Offline · RVR 1909</span>
 </header>
 <div id="output"></div>
 <div id="input-area">
@@ -86,10 +86,69 @@
 <script>
 const output = document.getElementById('output');
 const cmdInput = document.getElementById('cmd');
-let bibleData = null;
-let books = [];
 let commandHistory = [];
 let historyIndex = -1;
+
+// Base de datos interna autónoma (RVR 1909 incorporada)
+const bibleData = {
+  books: [
+    {
+      name: "Génesis",
+      chapters: [
+        { 
+          number: 1, 
+          verses: [
+            { number: 1, text: "En el principio creó Dios los cielos y la tierra." },
+            { number: 27, text: "Y creó Dios al hombre a su imagen, a imagen de Dios lo creó; varón y hembra los creó." }
+          ] 
+        }
+      ]
+    },
+    {
+      name: "Juan",
+      chapters: [
+        { 
+          number: 1, 
+          verses: [
+            { number: 1, text: "En el principio era el Verbo, y el Verbo era con Dios, y el Verbo era Dios." }
+          ] 
+        },
+        { 
+          number: 3, 
+          verses: [
+            { number: 16, text: "Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna." }
+          ] 
+        }
+      ]
+    },
+    {
+      name: "Salmos",
+      chapters: [
+        { 
+          number: 23, 
+          verses: [
+            { number: 1, text: "Jehová es mi pastor; nada me faltará." },
+            { number: 2, text: "En lugares de delicados pastos me hará descansar; junto a aguas de reposo me pastoreará." }
+          ] 
+        }
+      ]
+    },
+    {
+      name: "Proverbios",
+      chapters: [
+        { 
+          number: 3, 
+          verses: [
+            { number: 5, text: "Fíate de Jehová de todo tu corazón, y no te apoyes en tu propia prudencia." },
+            { number: 6, text: "Reconócelo en todos tus caminos, y él enderezará tus veredas." }
+          ] 
+        }
+      ]
+    }
+  ]
+};
+
+const books = bibleData.books.map(b => b.name);
 
 function addLine(text, className = '') {
   const div = document.createElement('div');
@@ -107,52 +166,7 @@ function addHTML(html, className = '') {
   output.scrollTop = output.scrollHeight;
 }
 
-async function loadBible() {
-  addLine('Cargando base de datos (RVR 1909)...', 'info');
-  try {
-    const res = await fetch('https://raw.githubusercontent.com/livebibleis-afk/biblia-viviente/main/data/rvr1909.json');
-    if (!res.ok) throw new Error('No se pudo conectar al repositorio remoto');
-    bibleData = await res.json();
-    books = extractBooks(bibleData);
-    addLine(`✓ Biblia cargada con éxito. ${books.length} libros disponibles.`, 'success');
-    showHelp();
-  } catch (e) {
-    addLine('Aviso: Conexión remota fallida. Activando modo demo offline.', 'error');
-    bibleData = getSample();
-    books = extractBooks(bibleData);
-    showHelp();
-  }
-}
-
-function extractBooks(data) {
-  if (data && data.books && Array.isArray(data.books)) {
-    return data.books.map(b => b.name);
-  }
-  return [];
-}
-
-function getSample() {
-  return {
-    books: [
-      {
-        name: "Juan",
-        chapters: [
-          { number: 1, verses: [{number:1, text:"En el principio era el Verbo, y el Verbo era con Dios, y el Verbo era Dios."}] },
-          { number: 3, verses: [{number:16, text:"Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna."}] }
-        ]
-      },
-      {
-        name: "Génesis",
-        chapters: [
-          { number: 1, verses: [{number:1, text:"En el principio creó Dios los cielos y la tierra."}] }
-        ]
-      }
-    ]
-  };
-}
-
 function findVerse(bookName, chapter, verse) {
-  if (!bibleData || !bibleData.books) return null;
   const cleanQuery = bookName.trim().toLowerCase();
   const book = bibleData.books.find(b => 
     b.name.toLowerCase() === cleanQuery ||
@@ -181,7 +195,7 @@ function parseAndExecute(input) {
   }
 
   if (['books', 'libros'].includes(lower)) {
-    addLine('Libros disponibles:', 'info');
+    addLine('Libros disponibles en este módulo:', 'info');
     addLine(books.join(', '), 'success');
     return;
   }
@@ -219,12 +233,12 @@ function executeVerseQuery(book, ch, v) {
 
 function showHelp() {
   addLine('=== Guía de Comandos · Biblia Código ===', 'info');
-  addLine('Sintaxis permitidas para consultas:', 'info');
+  addLine('Sintaxis permitidas:', 'info');
   addLine('  • verse("Juan", 3, 16)', 'success');
-  addLine('  • GET Génesis 1:1', 'success');
-  addLine('  • print Juan.3.16', 'success');
+  addLine('  • GET Salmos 23:1', 'success');
+  addLine('  • print Proverbios.3.5', 'success');
   addLine('Comandos generales:', 'info');
-  addLine('  • books  - Muestra la lista completa de libros', 'success');
+  addLine('  • books  - Muestra la lista de libros', 'success');
   addLine('  • help   - Muestra esta ayuda', 'success');
 }
 
@@ -251,13 +265,13 @@ cmdInput.addEventListener('keydown', (e) => {
   }
 });
 
-// Mantener el foco activo siempre en el input de la terminal
 document.addEventListener('click', () => cmdInput.focus());
 
-addLine('Bienvenido a Biblia Código', 'info');
-addLine('Terminal interactiva lista.', 'info');
+// Inicio de la terminal
+addLine('Bienvenido a Biblia Código (Modo Autónomo)', 'info');
+addLine('Sistema cargado sin dependencias externas. Listo para usar.', 'success');
 addLine('');
-loadBible();
+showHelp();
 </script>
 </body>
 </html>
