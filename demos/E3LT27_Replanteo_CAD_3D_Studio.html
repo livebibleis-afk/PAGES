@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>E3-LT27 | SVG-CAD 2D/3D BIM Studio — Replanteo Topográfico y Metrados</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; width: 100%;
+      height: 100dvh; min-height: -webkit-fill-available;
+      overflow: hidden; background: #0f172a; color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-user-select: none; user-select: none;
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.88);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+    }
+    #svg-viewport, #three-container {
+      touch-action: none;
+    }
+    .cad-interactive { cursor: pointer; transition: opacity 0.15s; }
+    .cad-interactive:hover { opacity: 0.85; }
+    .cad-selected {
+      filter: drop-shadow(0 0 8px #f59e0b);
+      stroke: #f59e0b !important;
+    }
+    @media (max-width: 768px) {
+      input[type="text"], select { font-size: 16px !important; }
+    }
+  </style>
+</head>
+<body class="flex flex-col h-[100dvh] w-full overflow-hidden">
+
+  <!-- BARRA SUPERIOR -->
+  <header class="h-12 px-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-1.5 shrink-0 z-30">
+    <div class="flex items-center gap-1.5 min-w-0">
+      <button id="btn-toggle-sidebar" class="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1 shrink-0 shadow">
+        <span>📊</span><span class="hidden sm:inline">Capas y Metrados</span><span class="sm:hidden">Panel</span>
+      </button>
+      <div class="truncate">
+        <div class="text-xs font-bold text-slate-100 truncate">MZ. E3 – LOTE 27 (91.12 m²)</div>
+        <div class="text-[10px] text-slate-400 truncate">Urb. Los Molinos II / San Pedro 4° Et. — Replanteo 6.26 m</div>
+      </div>
+    </div>
+
+    <!-- CONMUTADOR 2D+3D / 2D / 3D SIEMPRE VISIBLE -->
+    <div class="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700 shrink-0">
+      <button data-view="split" class="view-btn px-2 py-1 rounded text-[11px] font-semibold bg-sky-500 text-slate-950">2D+3D</button>
+      <button data-view="2d" class="view-btn px-2 py-1 rounded text-[11px] font-semibold text-slate-300">2D</button>
+      <button data-view="3d" class="view-btn px-2 py-1 rounded text-[11px] font-semibold text-slate-300">3D</button>
+    </div>
+
+    <!-- ACCIONES RÁPIDAS -->
+    <div class="flex items-center gap-1 shrink-0">
+      <button id="btn-planilla" class="px-2 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-semibold" title="Planilla de Metrados">📋</button>
+      <button id="btn-export-svg" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-[11px] font-semibold">.SVG</button>
+      <button id="btn-export-glb" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-[11px] font-semibold">.GLB</button>
+    </div>
+  </header>
+
+  <!-- PESTAÑA FLOTANTE IZQUIERDA -->
+  <button id="sidebar-floating-pill" class="fixed left-0 top-1/2 -translate-y-1/2 z-30 bg-amber-500 text-slate-950 font-extrabold text-[11px] px-1.5 py-3 rounded-r-xl shadow-lg border border-l-0 border-amber-300">
+    ❯
+  </button>
+
+  <!-- CAJÓN LATERAL IZQUIERDO (OCULTO POR DEFECTO) -->
+  <aside id="left-sidebar-drawer" class="fixed top-12 bottom-0 left-0 w-80 max-w-[88vw] glass-panel border-r border-slate-700 z-40 transform -translate-x-full transition-transform duration-200 flex flex-col overflow-hidden shadow-2xl">
+    <div class="p-3 border-b border-slate-800 flex items-center justify-between">
+      <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Inspector BIM & Replanteo</span>
+      <button id="btn-close-sidebar" class="text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800 text-xs">✕</button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-3 space-y-4 text-xs">
+      <!-- TARJETA DE TRIANGULACIÓN DEL FONDO -->
+      <div class="bg-slate-900/90 border border-amber-500/40 rounded-xl p-2.5 space-y-1.5">
+        <div class="font-bold text-amber-400 flex items-center justify-between">
+          <span>📍 Replanteo Puntos Traseros (C–D)</span>
+          <span class="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded">A = 91.12 m²</span>
+        </div>
+        <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+          <div class="bg-slate-800/80 p-1.5 rounded">
+            <div class="text-slate-400">Frente (A–B)</div>
+            <div class="font-bold text-white">6.20 m</div>
+          </div>
+          <div class="bg-slate-800/80 p-1.5 rounded">
+            <div class="text-slate-400">Fondo (C–D)</div>
+            <div class="font-bold text-emerald-400">6.26 m</div>
+          </div>
+          <div class="bg-slate-800/80 p-1.5 rounded">
+            <div class="text-slate-400">Laterales AD / BC</div>
+            <div class="font-bold text-white">15.00 m</div>
+          </div>
+          <div class="bg-slate-800/80 p-1.5 rounded">
+            <div class="text-slate-400">Ángulos A / B</div>
+            <div class="font-bold text-sky-300">77.23° / 103.00°</div>
+          </div>
+          <div class="bg-slate-800/80 p-1.5 rounded col-span-2 border border-rose-500/40">
+            <div class="text-rose-300 font-semibold">Diagonales desde Frente:</div>
+            <div class="flex justify-between mt-0.5 font-mono text-[11px]">
+              <span>Diag. Larga (A→C): <b class="text-amber-300">17.47 m</b></span>
+              <span>Diag. Corta (B→D): <b class="text-cyan-300">14.91 m</b></span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-[11px] text-slate-300">Invertir inclinación de manzana</span>
+          <button id="btn-flip-skew" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-[10px] font-semibold text-amber-300">⇄ Voltear</button>
+        </div>
+      </div>
+
+      <!-- INSPECTOR DE ELEMENTO SELECCIONADO -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 space-y-2">
+        <div class="font-bold text-sky-400">🔍 Elemento Seleccionado</div>
+        <div id="inspector-empty" class="text-slate-400 text-[11px]">Toca cualquier muro, vértice (A, B, C, D) o punto eléctrico en el plano 2D.</div>
+        <div id="inspector-details" class="hidden space-y-2">
+          <div class="grid grid-cols-2 gap-1 text-[11px]">
+            <div class="text-slate-400">ID:</div><div id="insp-id" class="font-mono text-slate-200 truncate"></div>
+            <div class="text-slate-400">Capa:</div><div id="insp-layer" class="text-slate-200 truncate"></div>
+            <div class="text-slate-400">Medida / Pos:</div><div id="insp-metric" class="font-bold text-emerald-400"></div>
+          </div>
+          <div class="flex gap-1.5">
+            <input id="insp-label-input" type="text" placeholder="Etiqueta..." class="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white" />
+            <button id="btn-insp-rename" class="px-2 py-1 bg-sky-600 rounded font-semibold text-white">OK</button>
+            <button id="btn-insp-delete" class="px-2 py-1 bg-rose-600 rounded font-semibold text-white">🗑️</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAPAS CAD/BIM -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 space-y-1.5">
+        <div class="font-bold text-slate-200">🗂️ Capas CAD / BIM</div>
+        <label class="flex items-center justify-between py-0.5"><span class="text-rose-400">● Vértices y Diagonales (A–D)</span><input type="checkbox" class="layer-toggle" data-target="capa-vertices" checked /></label>
+        <label class="flex items-center justify-between py-0.5"><span class="text-sky-300">■ Muros Perimétricos / Interiores</span><input type="checkbox" class="layer-toggle" data-target="capa-muros" checked /></label>
+        <label class="flex items-center justify-between py-0.5"><span class="text-amber-300">▯ Vanos (Puertas y Ventanas)</span><input type="checkbox" class="layer-toggle" data-target="capa-arquitectura" checked /></label>
+        <label class="flex items-center justify-between py-0.5"><span class="text-emerald-400">⚡ Instalaciones Eléctricas</span><input type="checkbox" class="layer-toggle" data-target="capa-instalaciones-electricas" checked /></label>
+        <label class="flex items-center justify-between py-0.5"><span class="text-slate-400">📏 Cotas y Ejes Topográficos</span><input type="checkbox" class="layer-toggle" data-target="capa-ejes-y-cotas" checked /></label>
+      </div>
+
+      <!-- PARÁMETROS 3D -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 space-y-2">
+        <div class="font-bold text-slate-200">🧊 Parámetros 3D BIM</div>
+        <div>
+          <div class="flex justify-between text-[11px] text-slate-400"><span>Altura de Muros (H)</span><span id="val-wall-h" class="text-white font-bold">2.60 m</span></div>
+          <input id="slider-wall-h" type="range" min="0.50" max="3.40" step="0.10" value="2.60" class="w-full accent-amber-500" />
+        </div>
+        <div>
+          <div class="flex justify-between text-[11px] text-slate-400"><span>Opacidad Muros</span><span id="val-wall-op" class="text-white font-bold">92%</span></div>
+          <input id="slider-wall-op" type="range" min="15" max="100" step="5" value="92" class="w-full accent-sky-500" />
+        </div>
+        <label class="flex items-center justify-between pt-1">
+          <span class="text-cyan-300 font-semibold">🩻 Modo Rayos X (Inspección MEP)</span>
+          <input id="chk-xray" type="checkbox" />
+        </label>
+      </div>
+
+      <!-- RESUMEN DE METRADOS -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 space-y-1.5">
+        <div class="font-bold text-emerald-400">📐 Resumen Rápido Metrados</div>
+        <div id="sidebar-metrados-summary" class="space-y-1 text-[11px] text-slate-300"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ÁREA PRINCIPAL DIVIDIDA 2D + 3D -->
+  <main id="workspace-grid" class="flex-1 min-h-0 grid grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1 relative">
+
+    <!-- PANEL 2D SVG CAD -->
+    <section id="pane-2d" class="relative min-h-0 bg-slate-950 border-b lg:border-b-0 lg:border-r border-slate-800 overflow-hidden flex flex-col">
+      <!-- BARRA HERRAMIENTAS 2D -->
+      <div class="absolute top-2 left-2 right-2 z-20 flex flex-wrap items-center justify-between gap-1 pointer-events-none">
+        <div class="flex items-center gap-1 glass-panel p-1 rounded-xl border border-slate-700 pointer-events-auto">
+          <button data-tool="select" class="tool-btn px-2 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950">👆 Insp</button>
+          <button data-tool="wall" class="tool-btn px-2 py-1 rounded-lg text-[11px] font-bold text-slate-200 hover:bg-slate-800">+Muro</button>
+          <button data-tool="elec" class="tool-btn px-2 py-1 rounded-lg text-[11px] font-bold text-slate-200 hover:bg-slate-800">+Luz/Tom</button>
+        </div>
+
+        <div id="elec-options" class="hidden items-center gap-1 glass-panel p-1 rounded-xl border border-slate-700 pointer-events-auto">
+          <select id="elec-circuit-select" class="bg-slate-800 text-white text-[11px] rounded px-1.5 py-1 border border-slate-600">
+            <option value="circuito-verde">C1 Luz (Verde)</option>
+            <option value="circuito-azul">C2 Toma (Azul)</option>
+            <option value="acometidas-potencia">Potencia (Rojo)</option>
+          </select>
+          <input id="elec-label-input" type="text" value="S1" class="w-14 bg-slate-800 text-white text-[11px] rounded px-1.5 py-1 border border-slate-600" />
+        </div>
+
+        <div class="flex items-center gap-1 glass-panel p-1 rounded-xl border border-slate-700 pointer-events-auto">
+          <button id="btn-2d-reset" class="px-2 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-slate-800">🎯 Centrar</button>
+        </div>
+      </div>
+
+      <!-- INDICADOR DE HERRAMIENTA ACTIVA -->
+      <div id="tool-hint" class="absolute bottom-2 left-2 z-20 glass-panel px-2.5 py-1 rounded-lg border border-slate-700 text-[10px] text-slate-300 pointer-events-none">
+        Arrastra con 1 dedo para mover • Pellizca para zoom • Toca un vértice o muro para ver medidas exactas
+      </div>
+
+      <!-- VIEWPORT SVG -->
+      <div id="svg-viewport" class="w-full h-full flex items-center justify-center overflow-hidden relative">
+        <div id="svg-transform-wrapper" class="origin-center will-change-transform">
+          <!-- ESCALA SVG: 100 px = 1.00 m | ViewBox: 1200 x 1850 -->
+          <svg id="cad-svg" viewBox="0 0 1200 1850" width="520" height="800" xmlns="http://www.w3.org/2000/svg" class="bg-[#0b1220] rounded-lg shadow-2xl border border-slate-800">
+            <defs>
+              <pattern id="grid-1m" width="100" height="100" patternUnits="userSpaceOnUse">
+                <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#1e293b" stroke-width="1"/>
+                <path d="M 25 0 L 25 100 M 50 0 L 50 100 M 75 0 L 75 100 M 0 25 L 100 25 M 0 50 L 100 50 M 0 75 L 100 75" fill="none" stroke="#131c31" stroke-width="0.6"/>
+              </pattern>
+              <marker id="arrow-dim" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#94a3b8"/>
+              </marker>
+            </defs>
+
+            <!-- FONDO DE GRILLA TOPOGRÁFICA (1 cuadro = 1.00 m) -->
+            <rect x="0" y="0" width="1200" height="1850" fill="url(#grid-1m)" />
+
+            <!-- EXTERIORES URBANOS Y COLINDANTES -->
+            <g id="capa-exteriores-urbanos">
+              <!-- Calzada / Vereda Frente -->
+              <rect x="60" y="1620" width="1080" height="170" fill="#172033" rx="6" />
+              <line x1="60" y1="1620" x2="1140" y2="1620" stroke="#64748b" stroke-width="3" stroke-dasharray="14,8" />
+              <text x="600" y="1665" fill="#94a3b8" font-size="22" font-weight="bold" text-anchor="middle">CALLE / FRENTE DE MANZANA E3 (6.20 m)</text>
+              <text x="600" y="1695" fill="#64748b" font-size="16" text-anchor="middle">Urb. Los Molinos II (3ra Et.) / Urb. San Pedro 4° Etapa — Carabayllo</text>
+
+              <!-- Referencia Lote Vecino Izquierdo (Lote 28) -->
+              <text x="165" y="1150" fill="#475569" font-size="22" font-weight="bold" text-anchor="middle" transform="rotate(-77.23, 165, 1150)">COLINDANTE: LOTE 28 (Mz. E3)</text>
+              <!-- Referencia Lote Vecino Derecho (Lote 26) -->
+              <text x="985" y="1150" fill="#475569" font-size="22" font-weight="bold" text-anchor="middle" transform="rotate(-77.00, 985, 1150)">COLINDANTE: LOTE 26 (Mz. E3)</text>
+              <!-- Referencia Lote Posterior -->
+              <text x="660" y="105" fill="#475569" font-size="20" font-weight="bold" text-anchor="middle">COLINDANTE POSTERIOR (FONDO 6.26 m)</text>
+            </g>
+
+            <!-- POLÍGONO DE ÁREA DEL LOTE (91.12 m²) -->
+            <g id="capa-textos-y-zonas">
+              <polygon id="lot-polygon" points="160,1620 780,1620 1117.46,158.45 491.46,157.08" fill="rgba(56, 189, 248, 0.06)" stroke="#38bdf8" stroke-width="2" stroke-dasharray="10,6" />
+              <text id="lot-center-label" x="638" y="900" fill="#38bdf8" font-size="26" font-weight="bold" text-anchor="middle" opacity="0.55">LOTE 27 - MZ. E3</text>
+              <text id="lot-area-label" x="638" y="935" fill="#94a3b8" font-size="20" text-anchor="middle" opacity="0.7">Área Inscrita: 91.12 m²</text>
+            </g>
+
+            <!-- MUROS PERIMÉTRICOS DEL LOTE (100 px = 1.00 m, espesor 0.15 m = 15 px) -->
+            <g id="capa-muros">
+              <!-- Muro Frente AB (6.20 m) -->
+              <path id="muro-frente-AB" data-label="Muro Frente (A-B) 6.20m" class="cad-interactive wall-segment" d="M 160 1620 L 780 1620" stroke="#a5c4d4" stroke-width="15" stroke-linecap="square" fill="none" />
+              <!-- Muro Lateral Derecho BC (15.00 m) -->
+              <path id="muro-derecho-BC" data-label="Lindero Derecho (B-C) 15.00m" class="cad-interactive wall-segment" d="M 780 1620 L 1117.46 158.45" stroke="#a5c4d4" stroke-width="15" stroke-linecap="square" fill="none" />
+              <!-- Muro Fondo Perdido CD (6.26 m) -->
+              <path id="muro-fondo-CD" data-label="Muro Fondo Recuperado (C-D) 6.26m" class="cad-interactive wall-segment" d="M 1117.46 158.45 L 491.46 157.08" stroke="#f59e0b" stroke-width="15" stroke-linecap="square" fill="none" />
+              <!-- Muro Lateral Izquierdo DA (15.00 m) -->
+              <path id="muro-izquierdo-DA" data-label="Lindero Izquierdo (D-A) 15.00m" class="cad-interactive wall-segment" d="M 491.46 157.08 L 160 1620" stroke="#a5c4d4" stroke-width="15" stroke-linecap="square" fill="none" />
+            </g>
+
+            <!-- VANOS (PUERTAS Y VENTANAS) -->
+            <g id="capa-arquitectura">
+              <g id="puertas">
+                <!-- Portón / Acceso principal en frente -->
+                <line id="puerta-principal" data-label="Acceso Principal (1.20m)" class="cad-interactive door-segment" x1="230" y1="1620" x2="350" y2="1620" stroke="#f97316" stroke-width="18" />
+              </g>
+              <g id="ventanas">
+                <!-- Ventana frontal -->
+                <line id="ventana-frontal" data-label="Ventana Frontal (2.00m)" class="cad-interactive window-segment" x1="450" y1="1620" x2="650" y2="1620" stroke="#38bdf8" stroke-width="16" />
+              </g>
+              <g id="escalera"></g>
+            </g>
+
+            <!-- INSTALACIONES ELÉCTRICAS BASE -->
+            <g id="capa-instalaciones-electricas">
+              <g id="acometidas-potencia">
+                <circle id="medidor-luz" data-label="Medidor Luz" data-x="195" data-y="1605" class="cad-interactive elec-node" cx="195" cy="1605" r="14" fill="#e74c3c" stroke="#fff" stroke-width="3" />
+                <text x="195" y="1582" fill="#fca5a5" font-size="14" font-weight="bold" text-anchor="middle">KW-H</text>
+              </g>
+              <g id="circuito-verde"></g>
+              <g id="circuito-azul"></g>
+            </g>
+
+            <!-- COTAS Y DIAGONALES DE TRIANGULACIÓN -->
+            <g id="capa-ejes-y-cotas">
+              <!-- Diagonal Larga A -> C (17.47 m) -->
+              <line id="diag-AC" x1="160" y1="1620" x2="1117.46" y2="158.45" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="12,8" />
+              <rect id="bg-diag-AC" x="535" y="810" width="210" height="32" rx="6" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5" />
+              <text id="lbl-diag-AC" x="640" y="832" fill="#fbbf24" font-size="17" font-weight="bold" text-anchor="middle">Diag. A→C: 17.47 m</text>
+
+              <!-- Diagonal Corta B -> D (14.91 m) -->
+              <line id="diag-BD" x1="780" y1="1620" x2="491.46" y2="157.08" stroke="#22d3ee" stroke-width="2.5" stroke-dasharray="12,8" />
+              <rect id="bg-diag-BD" x="520" y="965" width="210" height="32" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5" />
+              <text id="lbl-diag-BD" x="625" y="987" fill="#67e8f9" font-size="17" font-weight="bold" text-anchor="middle">Diag. B→D: 14.91 m</text>
+
+              <!-- Cotas de los 4 lados -->
+              <text id="cota-frente" x="470" y="1602" fill="#e2e8f0" font-size="20" font-weight="bold" text-anchor="middle">FRENTE: 6.20 m</text>
+              <text id="cota-fondo" x="804" y="135" fill="#fbbf24" font-size="22" font-weight="bold" text-anchor="middle">FONDO PERDIDO (C–D): 6.26 m</text>
+              <text id="cota-izq" x="300" y="880" fill="#cbd5e1" font-size="20" font-weight="bold" text-anchor="middle" transform="rotate(-77.23, 300, 880)">LATERAL IZQUIERDO: 15.00 m</text>
+              <text id="cota-der" x="975" y="880" fill="#cbd5e1" font-size="20" font-weight="bold" text-anchor="middle" transform="rotate(-77.00, 975, 880)">LATERAL DERECHO: 15.00 m</text>
+            </g>
+
+            <!-- VÉRTICES TOPOGRÁFICOS A, B, C, D -->
+            <g id="capa-vertices">
+              <!-- Vértice A (Frente Izquierdo) -->
+              <g id="vertice-A" data-label="Vértice A (Frente Izq - Ángulo 77.23° | Local: 0.00, 0.00 m)" class="cad-interactive vertex-node">
+                <circle cx="160" cy="1620" r="16" fill="#ef4444" stroke="#ffffff" stroke-width="3" />
+                <text x="125" y="1635" fill="#fca5a5" font-size="24" font-weight="bold">A</text>
+                <text x="160" y="1655" fill="#94a3b8" font-size="14" text-anchor="middle">(0.00, 0.00 m)</text>
+              </g>
+
+              <!-- Vértice B (Frente Derecho) -->
+              <g id="vertice-B" data-label="Vértice B (Frente Der - Ángulo 103.00° | Local: 6.20, 0.00 m)" class="cad-interactive vertex-node">
+                <circle cx="780" cy="1620" r="16" fill="#ef4444" stroke="#ffffff" stroke-width="3" />
+                <text x="808" y="1635" fill="#fca5a5" font-size="24" font-weight="bold">B</text>
+                <text x="780" y="1655" fill="#94a3b8" font-size="14" text-anchor="middle">(6.20, 0.00 m)</text>
+              </g>
+
+              <!-- Vértice C (Fondo Derecho - Recuperado) -->
+              <g id="vertice-C" data-label="Vértice C (Fondo Der Recuperado | Local: +9.57, +14.62 m)" class="cad-interactive vertex-node">
+                <circle cx="1117.46" cy="158.45" r="18" fill="#f59e0b" stroke="#ffffff" stroke-width="3.5" />
+                <text x="1145" y="155" fill="#fde047" font-size="26" font-weight="bold">C</text>
+                <text x="1080" y="125" fill="#fde047" font-size="15" font-weight="bold" text-anchor="middle">(+9.57, +14.62 m)</text>
+              </g>
+
+              <!-- Vértice D (Fondo Izquierdo - Recuperado) -->
+              <g id="vertice-D" data-label="Vértice D (Fondo Izq Recuperado | Local: +3.31, +14.63 m)" class="cad-interactive vertex-node">
+                <circle cx="491.46" cy="157.08" r="18" fill="#f59e0b" stroke="#ffffff" stroke-width="3.5" />
+                <text x="455" y="155" fill="#fde047" font-size="26" font-weight="bold">D</text>
+                <text x="491" y="125" fill="#fde047" font-size="15" font-weight="bold" text-anchor="middle">(+3.31, +14.63 m)</text>
+              </g>
+            </g>
+
+            <!-- CAPA PREVIEW DE DIBUJO -->
+            <g id="capa-preview"></g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 3D THREE.JS BIM -->
+    <section id="pane-3d" class="relative min-h-0 bg-slate-900 overflow-hidden">
+      <!-- CONTROLES CÁMARA 3D -->
+      <div class="absolute top-2 left-2 right-2 z-20 flex items-center justify-between gap-1 pointer-events-none">
+        <div class="flex items-center gap-1 glass-panel p-1 rounded-xl border border-slate-700 pointer-events-auto">
+          <button data-cam="iso" class="cam-btn px-2 py-1 rounded text-[11px] font-bold bg-sky-500 text-slate-950">Iso</button>
+          <button data-cam="top" class="cam-btn px-2 py-1 rounded text-[11px] font-bold text-slate-200 hover:bg-slate-800">Planta</button>
+          <button data-cam="front" class="cam-btn px-2 py-1 rounded text-[11px] font-bold text-slate-200 hover:bg-slate-800">Frontis</button>
+          <button data-cam="back" class="cam-btn px-2 py-1 rounded text-[11px] font-bold text-amber-300 hover:bg-slate-800">Fondo 6.26</button>
+        </div>
+        <div class="glass-panel px-2.5 py-1 rounded-xl border border-slate-700 text-[10px] text-amber-300 font-semibold pointer-events-none">
+          3D BIM en Vivo • Hitos C y D en Ámbar
+        </div>
+      </div>
+
+      <div id="three-container" class="w-full h-full"></div>
+    </section>
+  </main>
+
+  <!-- MODAL PLANILLA OFICIAL DE METRADOS -->
+  <div id="modal-planilla" class="fixed inset-0 z-50 bg-black/75 hidden items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[85dvh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="p-3.5 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-bold text-amber-400">📋 Planilla Oficial de Metrados (CAPECO / RNE / CNE)</h2>
+          <p class="text-[11px] text-slate-400">Mz. E3 Lote 27 — Urb. Los Molinos II / San Pedro 4° Etapa (Área: 91.12 m²)</p>
+        </div>
+        <button id="btn-close-planilla" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold">✕</button>
+      </div>
+      <div id="planilla-content" class="p-4 overflow-y-auto space-y-4 text-xs"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+    const SVG_VIEWBOX_W = 1200;
+    const SVG_VIEWBOX_H = 1850;
+    const CENTER_X = 638;
+    const CENTER_Y = 890;
+
+    let currentTool = 'select';
+    let wallStartPoint = null;
+    let selectedEl = null;
+    let isSkewRight = true; // true: inclinado hacia la derecha (+dx), false: inclinado hacia la izquierda (-dx)
+
+    // Estado Pan & Pinch Zoom 2D
+    let panX = 0, panY = 0, scale2D = 1;
+    let isDragging2D = false, dragMoved = false;
+    let startTouchX = 0, startTouchY = 0;
+    let initialPinchDist = 0, initialScale2D = 1;
+
+    const svg = document.getElementById('cad-svg');
+    const wrapper2D = document.getElementById('svg-transform-wrapper');
+    const viewport2D = document.getElementById('svg-viewport');
+
+    function update2DTransform() {
+      wrapper2D.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${scale2D})`;
+    }
+
+    function clientToSvgCoords(clientX, clientY) {
+      const rect = svg.getBoundingClientRect();
+      const rawX = ((clientX - rect.left) / Math.max(rect.width, 1)) * SVG_VIEWBOX_W;
+      const rawY = ((clientY - rect.top) / Math.max(rect.height, 1)) * SVG_VIEWBOX_H;
+      // Snap a grilla de 0.25 m (25 px)
+      const snapX = Math.round(rawX / 25) * 25;
+      const snapY = Math.round(rawY / 25) * 25;
+      return { rawX, rawY, snapX, snapY };
+    }
+
+    // Invertir sentido de inclinación de la manzana (izquierda vs derecha)
+    document.getElementById('btn-flip-skew').addEventListener('click', () => {
+      isSkewRight = !isSkewRight;
+      // Coordenadas exactas:
+      // Frente A=(160, 1620), B=(780, 1620) (6.20 m)
+      // Si skewRight: D=(160+331.46, 1620-1462.92)=(491.46, 157.08), C=(160+957.46, 1620-1461.55)=(1117.46, 158.45)
+      // Si skewLeft:  D=(160-337.46, 1620-1461.55)=(-177.46 -> desplazamos frente a X=420..1040)
+      const Ax = isSkewRight ? 160 : 420;
+      const Bx = Ax + 620;
+      const Ay = 1620, By = 1620;
+
+      const Dx = isSkewRight ? (Ax + 331.46) : (Ax - 337.46);
+      const Dy = isSkewRight ? (Ay - 1462.92) : (Ay - 1461.55);
+      const Cx = isSkewRight ? (Ax + 957.46) : (Ax + 288.54);
+      const Cy = isSkewRight ? (Ay - 1461.55) : (Ay - 1462.92);
+
+      document.getElementById('lot-polygon').setAttribute('points', `${Ax},${Ay} ${Bx},${By} ${Cx.toFixed(2)},${Cy.toFixed(2)} ${Dx.toFixed(2)},${Dy.toFixed(2)}`);
+      document.getElementById('muro-frente-AB').setAttribute('d', `M ${Ax} ${Ay} L ${Bx} ${By}`);
+      document.getElementById('muro-derecho-BC').setAttribute('d', `M ${Bx} ${By} L ${Cx.toFixed(2)} ${Cy.toFixed(2)}`);
+      document.getElementById('muro-fondo-CD').setAttribute('d', `M ${Cx.toFixed(2)} ${Cy.toFixed(2)} L ${Dx.toFixed(2)} ${Dy.toFixed(2)}`);
+      document.getElementById('muro-izquierdo-DA').setAttribute('d', `M ${Dx.toFixed(2)} ${Dy.toFixed(2)} L ${Ax} ${Ay}`);
+
+      const diagAC = document.getElementById('diag-AC');
+      diagAC.setAttribute('x1', Ax); diagAC.setAttribute('y1', Ay);
+      diagAC.setAttribute('x2', Cx.toFixed(2)); diagAC.setAttribute('y2', Cy.toFixed(2));
+
+      const diagBD = document.getElementById('diag-BD');
+      diagBD.setAttribute('x1', Bx); diagBD.setAttribute('y1', By);
+      diagBD.setAttribute('x2', Dx.toFixed(2)); diagBD.setAttribute('y2', Dy.toFixed(2));
+
+      // Actualizar círculos de vértices
+      const setV = (id, cx, cy, tx, ty) => {
+        const g = document.getElementById(id);
+        const c = g.querySelector('circle');
+        c.setAttribute('cx', cx); c.setAttribute('cy', cy);
+        const texts = g.querySelectorAll('text');
+        texts[0].setAttribute('x', tx); texts[0].setAttribute('y', ty);
+        if (texts[1]) { texts[1].setAttribute('x', cx); texts[1].setAttribute('y', cy + (cy > 1000 ? 35 : -30)); }
+      };
+      setV('vertice-A', Ax, Ay, Ax - 35, Ay + 15);
+      setV('vertice-B', Bx, By, Bx + 28, By + 15);
+      setV('vertice-C', Cx.toFixed(2), Cy.toFixed(2), Cx + 25, Cy);
+      setV('vertice-D', Dx.toFixed(2), Dy.toFixed(2), Dx - 38, Dy);
+
+      const lblAC = document.getElementById('lbl-diag-AC');
+      const lblBD = document.getElementById('lbl-diag-BD');
+      lblAC.textContent = isSkewRight ? 'Diag. A→C: 17.47 m' : 'Diag. A→C: 14.91 m';
+      lblBD.textContent = isSkewRight ? 'Diag. B→D: 14.91 m' : 'Diag. B→D: 17.47 m';
+
+      document.getElementById('puerta-principal').setAttribute('x1', Ax + 70);
+      document.getElementById('puerta-principal').setAttribute('x2', Ax + 190);
+      document.getElementById('ventana-frontal').setAttribute('x1', Ax + 290);
+      document.getElementById('ventana-frontal').setAttribute('x2', Ax + 490);
+      const med = document.getElementById('medidor-luz');
+      med.setAttribute('cx', Ax + 35);
+
+      rebuildAll();
+    });
+
+    // Selección e inspección
+    function selectElement(el) {
+      if (selectedEl) selectedEl.classList.remove('cad-selected');
+      selectedEl = el;
+      if (!el) {
+        document.getElementById('inspector-empty').classList.remove('hidden');
+        document.getElementById('inspector-details').classList.add('hidden');
+        return;
+      }
+      el.classList.add('cad-selected');
+      document.getElementById('inspector-empty').classList.add('hidden');
+      document.getElementById('inspector-details').classList.remove('hidden');
+
+      document.getElementById('insp-id').textContent = el.id || 'sin-id';
+      const parentG = el.closest('g[id^="capa-"]');
+      document.getElementById('insp-layer').textContent = parentG ? parentG.id : 'general';
+      document.getElementById('insp-label-input').value = el.getAttribute('data-label') || el.id || '';
+
+      let metric = '';
+      if (el.tagName === 'path' || el.tagName === 'line') {
+        const len = el.getTotalLength ? el.getTotalLength() / 100 : 0;
+        metric = `${len.toFixed(2)} ml`;
+      } else if (el.classList.contains('vertex-node')) {
+        const c = el.querySelector('circle');
+        const vx = ((parseFloat(c.getAttribute('cx')) - (isSkewRight ? 160 : 420)) / 100).toFixed(2);
+        const vy = ((1620 - parseFloat(c.getAttribute('cy'))) / 100).toFixed(2);
+        metric = `X: ${vx}m, Y: ${vy}m`;
+      } else if (el.tagName === 'circle') {
+        metric = `Punto MEP`;
+      }
+      document.getElementById('insp-metric').textContent = metric;
+    }
+
+    document.getElementById('btn-insp-rename').addEventListener('click', () => {
+      if (!selectedEl) return;
+      const val = document.getElementById('insp-label-input').value.trim();
+      selectedEl.setAttribute('data-label', val);
+      const txt = selectedEl.querySelector('text');
+      if (txt && val) txt.textContent = val;
+      rebuildAll();
+    });
+
+    document.getElementById('btn-insp-delete').addEventListener('click', () => {
+      if (!selectedEl) return;
+      selectedEl.remove();
+      selectElement(null);
+      rebuildAll();
+    });
+
+    function handleCanvasTap(clientX, clientY, targetEl) {
+      const { snapX, snapY } = clientToSvgCoords(clientX, clientY);
+
+      if (currentTool === 'select') {
+        const interactive = targetEl ? targetEl.closest('.cad-interactive') : null;
+        selectElement(interactive);
+        return;
+      }
+
+      if (currentTool === 'wall') {
+        const preview = document.getElementById('capa-preview');
+        if (!wallStartPoint) {
+          wallStartPoint = { x: snapX, y: snapY };
+          preview.innerHTML = `<circle cx="${snapX}" cy="${snapY}" r="10" fill="#f59e0b" />`;
+          document.getElementById('tool-hint').textContent = `Inicio muro (${(snapX/100).toFixed(2)}, ${(snapY/100).toFixed(2)}) — Toca el segundo punto`;
+        } else {
+          // Bloqueo ortogonal si está cerca de eje H/V
+          let endX = snapX, endY = snapY;
+          if (Math.abs(endX - wallStartPoint.x) < 35) endX = wallStartPoint.x;
+          if (Math.abs(endY - wallStartPoint.y) < 35) endY = wallStartPoint.y;
+
+          const newPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          const id = 'muro-' + Date.now().toString().slice(-4);
+          newPath.setAttribute('id', id);
+          newPath.setAttribute('data-label', 'Muro Tabique');
+          newPath.setAttribute('class', 'cad-interactive wall-segment');
+          newPath.setAttribute('d', `M ${wallStartPoint.x} ${wallStartPoint.y} L ${endX} ${endY}`);
+          newPath.setAttribute('stroke', '#a5c4d4');
+          newPath.setAttribute('stroke-width', '15');
+          newPath.setAttribute('stroke-linecap', 'square');
+          newPath.setAttribute('fill', 'none');
+          document.getElementById('capa-muros').appendChild(newPath);
+
+          wallStartPoint = null;
+          preview.innerHTML = '';
+          document.getElementById('tool-hint').textContent = 'Muro agregado y extruido en 3D. Toca para trazar otro.';
+          rebuildAll();
+        }
+        return;
+      }
+
+      if (currentTool === 'elec') {
+        const circuitId = document.getElementById('elec-circuit-select').value;
+        const label = document.getElementById('elec-label-input').value.trim() || 'P1';
+        const group = document.getElementById(circuitId);
+        const color = circuitId === 'circuito-verde' ? '#27ae60' : (circuitId === 'circuito-azul' ? '#2980b9' : '#e74c3c');
+
+        // Buscar nodo más cercano en el circuito o acometida para trazar tubería curva Bezier
+        const existingNodes = Array.from(group.querySelectorAll('circle'));
+        let refNode = existingNodes[existingNodes.length - 1] || document.getElementById('medidor-luz');
+        if (refNode) {
+          const rx = parseFloat(refNode.getAttribute('cx'));
+          const ry = parseFloat(refNode.getAttribute('cy'));
+          const ctrlX = (rx + snapX) / 2 + 40;
+          const ctrlY = (ry + snapY) / 2 - 40;
+          const pipe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          pipe.setAttribute('d', `M ${rx} ${ry} Q ${ctrlX} ${ctrlY} ${snapX} ${snapY}`);
+          pipe.setAttribute('stroke', color);
+          pipe.setAttribute('stroke-width', '4');
+          pipe.setAttribute('fill', 'none');
+          if (circuitId === 'circuito-azul') pipe.setAttribute('stroke-dasharray', '6,3');
+          group.appendChild(pipe);
+        }
+
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('id', 'elec-' + Date.now().toString().slice(-4));
+        c.setAttribute('data-label', label);
+        c.setAttribute('class', 'cad-interactive elec-node');
+        c.setAttribute('cx', snapX);
+        c.setAttribute('cy', snapY);
+        c.setAttribute('r', '12');
+        c.setAttribute('fill', color);
+        c.setAttribute('stroke', '#ffffff');
+        c.setAttribute('stroke-width', '2.5');
+        group.appendChild(c);
+
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('x', snapX);
+        t.setAttribute('y', snapY - 18);
+        t.setAttribute('fill', '#f8fafc');
+        t.setAttribute('font-size', '14');
+        t.setAttribute('font-weight', 'bold');
+        t.setAttribute('text-anchor', 'middle');
+        t.textContent = label;
+        group.appendChild(t);
+
+        rebuildAll();
+      }
+    }
+
+    // Eventos Táctiles Nativos Safari iOS / Brave + Mouse
+    viewport2D.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isDragging2D = true;
+        dragMoved = false;
+        startTouchX = e.touches[0].clientX - panX;
+        startTouchY = e.touches[0].clientY - panY;
+      } else if (e.touches.length === 2) {
+        isDragging2D = false;
+        initialPinchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        initialScale2D = scale2D;
+      }
+    }, { passive: false });
+
+    viewport2D.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1 && isDragging2D) {
+        const nx = e.touches[0].clientX - startTouchX;
+        const ny = e.touches[0].clientY - startTouchY;
+        if (Math.hypot(nx - panX, ny - panY) > 6) dragMoved = true;
+        panX = nx;
+        panY = ny;
+        update2DTransform();
+      } else if (e.touches.length === 2) {
+        dragMoved = true;
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        scale2D = Math.min(Math.max(initialScale2D * (dist / Math.max(initialPinchDist, 1)), 0.4), 4.5);
+        update2DTransform();
+      }
+    }, { passive: false });
+
+    viewport2D.addEventListener('touchend', (e) => {
+      if (e.changedTouches.length === 1 && !dragMoved) {
+        const t = e.changedTouches[0];
+        const target = document.elementFromPoint(t.clientX, t.clientY);
+        handleCanvasTap(t.clientX, t.clientY, target);
+      }
+      isDragging2D = false;
+    });
+
+    // Soporte Mouse Desktop
+    viewport2D.addEventListener('mousedown', (e) => {
+      isDragging2D = true;
+      dragMoved = false;
+      startTouchX = e.clientX - panX;
+      startTouchY = e.clientY - panY;
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging2D) return;
+      const nx = e.clientX - startTouchX;
+      const ny = e.clientY - startTouchY;
+      if (Math.hypot(nx - panX, ny - panY) > 4) dragMoved = true;
+      panX = nx; panY = ny;
+      update2DTransform();
+    });
+    window.addEventListener('mouseup', (e) => {
+      if (isDragging2D && !dragMoved && viewport2D.contains(e.target)) {
+        handleCanvasTap(e.clientX, e.clientY, e.target);
+      }
+      isDragging2D = false;
+    });
+    viewport2D.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.12 : 0.9;
+      scale2D = Math.min(Math.max(scale2D * factor, 0.4), 4.5);
+      update2DTransform();
+    }, { passive: false });
+
+    document.getElementById('btn-2d-reset').addEventListener('click', () => {
+      panX = 0; panY = 0; scale2D = 1;
+      update2DTransform();
+    });
+
+    // Cambio de Herramienta 2D
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tool-btn').forEach(b => {
+          b.classList.remove('bg-amber-500', 'text-slate-950');
+          b.classList.add('text-slate-200');
+        });
+        btn.classList.add('bg-amber-500', 'text-slate-950');
+        btn.classList.remove('text-slate-200');
+        currentTool = btn.dataset.tool;
+        wallStartPoint = null;
+        document.getElementById('capa-preview').innerHTML = '';
+        document.getElementById('elec-options').classList.toggle('hidden', currentTool !== 'elec');
+        document.getElementById('elec-options').classList.toggle('flex', currentTool === 'elec');
+      });
+    });
+
+    // =========================================================
+    // VISOR 3D THREE.JS BIM SINCRONIZADO EN TIEMPO REAL
+    // =========================================================
+    const threeContainer = document.getElementById('three-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0f172a);
+
+    const camera = new THREE.PerspectiveCamera(45, Math.max(threeContainer.clientWidth, 1) / Math.max(threeContainer.clientHeight, 1), 0.1, 200);
+    camera.position.set(11, 13, 14);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'default', preserveDrawingBuffer: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(Math.max(threeContainer.clientWidth, 1), Math.max(threeContainer.clientHeight, 1));
+    threeContainer.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, 1.0, 0);
+
+    // Iluminación BIM
+    scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.95);
+    dirLight.position.set(12, 22, 15);
+    scene.add(dirLight);
+
+    const gridHelper = new THREE.GridHelper(24, 24, 0x334155, 0x1e293b);
+    gridHelper.position.y = -0.15;
+    scene.add(gridHelper);
+
+    const bimRootGroup = new THREE.Group();
+    bimRootGroup.name = 'E3_Lote27_BIM';
+    scene.add(bimRootGroup);
+
+    function svgTo3D(x, y) {
+      return {
+        X: (x - CENTER_X) / 100,
+        Z: (y - CENTER_Y) / 100
+      };
+    }
+
+    function build3DFromSVG() {
+      while (bimRootGroup.children.length > 0) {
+        bimRootGroup.remove(bimRootGroup.children[0]);
+      }
+
+      const wallH = parseFloat(document.getElementById('slider-wall-h').value);
+      const isXray = document.getElementById('chk-xray').checked;
+      const wallOp = isXray ? 0.22 : parseInt(document.getElementById('slider-wall-op').value, 10) / 100;
+
+      // 1. Losa de piso según el polígono del lote
+      const polyPts = document.getElementById('lot-polygon').getAttribute('points').trim().split(/\s+/).map(p => {
+        const [px, py] = p.split(',').map(Number);
+        return svgTo3D(px, py);
+      });
+      if (polyPts.length >= 3) {
+        const shape = new THREE.Shape();
+        shape.moveTo(polyPts[0].X, -polyPts[0].Z);
+        for (let i = 1; i < polyPts.length; i++) shape.lineTo(polyPts[i].X, -polyPts[i].Z);
+        shape.closePath();
+        const slabGeo = new THREE.ExtrudeGeometry(shape, { depth: 0.15, bevelEnabled: false });
+        slabGeo.rotateX(-Math.PI / 2);
+        const slabMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.85 });
+        const slabMesh = new THREE.Mesh(slabGeo, slabMat);
+        slabMesh.position.y = -0.15;
+        bimRootGroup.add(slabMesh);
+      }
+
+      // 2. Muros (#capa-muros)
+      if (document.querySelector('[data-target="capa-muros"]').checked) {
+        document.querySelectorAll('#capa-muros .wall-segment').forEach(path => {
+          const d = path.getAttribute('d');
+          const m = d.match(/M\s*([-\d.]+)\s+([-\d.]+)\s+L\s*([-\d.]+)\s+([-\d.]+)/i);
+          if (!m) return;
+          const p1 = svgTo3D(parseFloat(m[1]), parseFloat(m[2]));
+          const p2 = svgTo3D(parseFloat(m[3]), parseFloat(m[4]));
+          const dx = p2.X - p1.X;
+          const dz = p2.Z - p1.Z;
+          const length = Math.hypot(dx, dz);
+          if (length < 0.05) return;
+
+          const isRearWall = path.id === 'muro-fondo-CD';
+          const geo = new THREE.BoxGeometry(length, wallH, 0.15);
+          const mat = new THREE.MeshStandardMaterial({
+            color: isRearWall ? 0xf59e0b : 0xa5c4d4,
+            transparent: wallOp < 1,
+            opacity: wallOp,
+            roughness: 0.6
+          });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.position.set((p1.X + p2.X) / 2, wallH / 2, (p1.Z + p2.Z) / 2);
+          mesh.rotation.y = -Math.atan2(dz, dx);
+          bimRootGroup.add(mesh);
+        });
+      }
+
+      // 3. Ventanas (#ventanas)
+      if (document.querySelector('[data-target="capa-arquitectura"]').checked) {
+        document.querySelectorAll('#ventanas .window-segment').forEach(line => {
+          const p1 = svgTo3D(parseFloat(line.getAttribute('x1')), parseFloat(line.getAttribute('y1')));
+          const p2 = svgTo3D(parseFloat(line.getAttribute('x2')), parseFloat(line.getAttribute('y2')));
+          const length = Math.hypot(p2.X - p1.X, p2.Z - p1.Z);
+          const geo = new THREE.BoxGeometry(length, 1.20, 0.18);
+          const mat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.55 });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.position.set((p1.X + p2.X) / 2, 1.00 + 0.60, (p1.Z + p2.Z) / 2);
+          mesh.rotation.y = -Math.atan2(p2.Z - p1.Z, p2.X - p1.X);
+          bimRootGroup.add(mesh);
+        });
+
+        // Puertas (#puertas)
+        document.querySelectorAll('#puertas .door-segment').forEach(line => {
+          const p1 = svgTo3D(parseFloat(line.getAttribute('x1')), parseFloat(line.getAttribute('y1')));
+          const p2 = svgTo3D(parseFloat(line.getAttribute('x2')), parseFloat(line.getAttribute('y2')));
+          const length = Math.hypot(p2.X - p1.X, p2.Z - p1.Z);
+          const geo = new THREE.BoxGeometry(length, 2.10, 0.18);
+          const mat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.5 });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.position.set((p1.X + p2.X) / 2, 1.05, (p1.Z + p2.Z) / 2);
+          mesh.rotation.y = -Math.atan2(p2.Z - p1.Z, p2.X - p1.X);
+          bimRootGroup.add(mesh);
+        });
+      }
+
+      // 4. Vértices topográficos e hitos (#capa-vertices)
+      if (document.querySelector('[data-target="capa-vertices"]').checked) {
+        document.querySelectorAll('#capa-vertices .vertex-node').forEach(v => {
+          const c = v.querySelector('circle');
+          const pt = svgTo3D(parseFloat(c.getAttribute('cx')), parseFloat(c.getAttribute('cy')));
+          const isRear = v.id === 'vertice-C' || v.id === 'vertice-D';
+          const stakeGeo = new THREE.CylinderGeometry(0.08, 0.08, wallH + 0.4, 16);
+          const stakeMat = new THREE.MeshStandardMaterial({
+            color: isRear ? 0xf59e0b : 0xef4444,
+            emissive: isRear ? 0x78350f : 0x7f1d1d
+          });
+          const stake = new THREE.Mesh(stakeGeo, stakeMat);
+          stake.position.set(pt.X, (wallH + 0.4) / 2, pt.Z);
+          bimRootGroup.add(stake);
+        });
+      }
+
+      // 5. Puntos Eléctricos (#capa-instalaciones-electricas)
+      if (document.querySelector('[data-target="capa-instalaciones-electricas"]').checked) {
+        document.querySelectorAll('#capa-instalaciones-electricas .elec-node').forEach(node => {
+          const pt = svgTo3D(parseFloat(node.getAttribute('cx')), parseFloat(node.getAttribute('cy')));
+          const parentId = node.parentElement ? node.parentElement.id : '';
+          let yPos = 0.35, col = 0x2980b9;
+          if (parentId === 'circuito-verde') { yPos = wallH - 0.12; col = 0x27ae60; }
+          if (parentId === 'acometidas-potencia') { yPos = 1.20; col = 0xe74c3c; }
+          const sph = new THREE.Mesh(
+            new THREE.SphereGeometry(0.12, 16, 16),
+            new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.4 })
+          );
+          sph.position.set(pt.X, yPos, pt.Z);
+          bimRootGroup.add(sph);
+        });
+      }
+    }
+
+    // =========================================================
+    // CÁLCULO DE METRADOS (CAPECO / RNE / CNE)
+    // =========================================================
+    function updateMetrados() {
+      const wallH = parseFloat(document.getElementById('slider-wall-h').value);
+      let totalWallML = 0;
+      document.querySelectorAll('#capa-muros .wall-segment').forEach(p => {
+        totalWallML += p.getTotalLength() / 100;
+      });
+
+      let winArea = 0;
+      document.querySelectorAll('#ventanas .window-segment').forEach(l => {
+        winArea += (Math.hypot(l.x2.baseVal.value - l.x1.baseVal.value, l.y2.baseVal.value - l.y1.baseVal.value) / 100) * 1.20;
+      });
+
+      let doorArea = 0;
+      document.querySelectorAll('#puertas .door-segment').forEach(l => {
+        doorArea += (Math.hypot(l.x2.baseVal.value - l.x1.baseVal.value, l.y2.baseVal.value - l.y1.baseVal.value) / 100) * 2.10;
+      });
+
+      const grossWallArea = totalWallML * wallH;
+      const netWallArea = Math.max(grossWallArea - winArea - doorArea, 0);
+      const bricks = Math.ceil(netWallArea * 39 * 1.05);
+      const mortarM3 = (netWallArea * 0.022).toFixed(2);
+      const plasterM2 = (netWallArea * 2).toFixed(2);
+
+      const elecNodes = document.querySelectorAll('#capa-instalaciones-electricas .elec-node').length;
+      let elecPipeML = elecNodes * 1.35;
+      document.querySelectorAll('#capa-instalaciones-electricas path').forEach(p => {
+        elecPipeML += p.getTotalLength() / 100;
+      });
+
+      document.getElementById('sidebar-metrados-summary').innerHTML = `
+        <div class="flex justify-between"><span>Longitud Muros:</span><b>${totalWallML.toFixed(2)} ml</b></div>
+        <div class="flex justify-between"><span>Área Neta Muros:</span><b>${netWallArea.toFixed(2)} m²</b></div>
+        <div class="flex justify-between"><span>Ladrillo KK 18H (+5%):</span><b>${bricks} und</b></div>
+        <div class="flex justify-between"><span>Mortero C:A 1:4:</span><b>${mortarM3} m³</b></div>
+        <div class="flex justify-between"><span>Tarrajeo Ambas Caras:</span><b>${plasterM2} m²</b></div>
+        <div class="flex justify-between text-emerald-400"><span>Tubería PVC-P Elec.:</span><b>${elecPipeML.toFixed(2)} ml (${elecNodes} pts)</b></div>
+      `;
+
+      document.getElementById('planilla-content').innerHTML = `
+        <div class="bg-slate-800/70 p-3 rounded-xl border border-amber-500/30">
+          <div class="font-bold text-amber-400 mb-1">1. Datos Geométricos Oficiales del Terreno</div>
+          <p class="text-slate-300">Frente (A–B): <b>6.20 m</b> | Fondo Recuperado (C–D): <b>6.26 m</b> | Laterales (A–D y B–C): <b>15.00 m</b> | Área Inscrita: <b>91.12 m²</b>.</p>
+          <p class="text-slate-300 mt-1">Triangulación de Replanteo: Diagonal Larga <b>17.47 m</b> y Diagonal Corta <b>14.91 m</b> (Ángulos internos frontales: <b>77.23°</b> y <b>103.00°</b>).</p>
+        </div>
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-700 text-slate-400">
+              <th class="py-1.5">Partida / Material</th>
+              <th class="py-1.5">Unidad</th>
+              <th class="py-1.5 text-right">Metrado</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800">
+            <tr><td class="py-1.5">Muro de Albañilería (H = ${wallH.toFixed(2)} m)</td><td>ml</td><td class="text-right font-bold">${totalWallML.toFixed(2)}</td></tr>
+            <tr><td class="py-1.5">Área Neta de Muros (desc. vanos)</td><td>m²</td><td class="text-right font-bold">${netWallArea.toFixed(2)}</td></tr>
+            <tr><td class="py-1.5">Ladrillo King Kong 18H (Soga + 5% desp.)</td><td>und</td><td class="text-right font-bold text-amber-400">${bricks}</td></tr>
+            <tr><td class="py-1.5">Mortero Asentado C:A 1:4 (0.022 m³/m²)</td><td>m³</td><td class="text-right font-bold">${mortarM3}</td></tr>
+            <tr><td class="py-1.5">Tarrajeo Frotachado Ambas Caras</td><td>m²</td><td class="text-right font-bold">${plasterM2}</td></tr>
+            <tr><td class="py-1.5">Tubería PVC-P Eléctrica + Bajantes</td><td>ml</td><td class="text-right font-bold text-emerald-400">${elecPipeML.toFixed(2)}</td></tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    function rebuildAll() {
+      build3DFromSVG();
+      updateMetrados();
+    }
+
+    // =========================================================
+    // CONTROLES UI, SIDEBAR, CÁMARAS Y EXPORTACIÓN
+    // =========================================================
+    const drawer = document.getElementById('left-sidebar-drawer');
+    const toggleSidebar = (forceOpen) => {
+      const isClosed = drawer.classList.contains('-translate-x-full');
+      const open = typeof forceOpen === 'boolean' ? forceOpen : isClosed;
+      drawer.classList.toggle('-translate-x-full', !open);
+      setTimeout(resizeThree, 220);
+    };
+    document.getElementById('btn-toggle-sidebar').addEventListener('click', () => toggleSidebar());
+    document.getElementById('sidebar-floating-pill').addEventListener('click', () => toggleSidebar());
+    document.getElementById('btn-close-sidebar').addEventListener('click', () => toggleSidebar(false));
+
+    // Toggle Capas
+    document.querySelectorAll('.layer-toggle').forEach(chk => {
+      chk.addEventListener('change', () => {
+        const g = document.getElementById(chk.dataset.target);
+        if (g) g.style.display = chk.checked ? '' : 'none';
+        rebuildAll();
+      });
+    });
+
+    // Sliders 3D
+    document.getElementById('slider-wall-h').addEventListener('input', (e) => {
+      document.getElementById('val-wall-h').textContent = parseFloat(e.target.value).toFixed(2) + ' m';
+      rebuildAll();
+    });
+    document.getElementById('slider-wall-op').addEventListener('input', (e) => {
+      document.getElementById('val-wall-op').textContent = e.target.value + '%';
+      rebuildAll();
+    });
+    document.getElementById('chk-xray').addEventListener('change', rebuildAll);
+
+    // Cámaras rápidas 3D
+    document.querySelectorAll('.cam-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cam-btn').forEach(b => { b.classList.remove('bg-sky-500', 'text-slate-950'); b.classList.add('text-slate-200'); });
+        btn.classList.add('bg-sky-500', 'text-slate-950');
+        btn.classList.remove('text-slate-200');
+        const mode = btn.dataset.cam;
+        if (mode === 'iso') { camera.position.set(11, 13, 14); controls.target.set(0, 1, 0); }
+        if (mode === 'top') { camera.position.set(0, 21, 0.1); controls.target.set(0, 0, 0); }
+        if (mode === 'front') { camera.position.set(0, 3.5, 14); controls.target.set(0, 1.2, 4); }
+        if (mode === 'back') { camera.position.set(2, 4.5, -14); controls.target.set(1, 1.2, -5); }
+        controls.update();
+      });
+    });
+
+    // Conmutador Vistas 2D+3D / 2D / 3D
+    document.querySelectorAll('.view-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.view-btn').forEach(b => { b.classList.remove('bg-sky-500', 'text-slate-950'); b.classList.add('text-slate-300'); });
+        btn.classList.add('bg-sky-500', 'text-slate-950');
+        btn.classList.remove('text-slate-300');
+
+        const v = btn.dataset.view;
+        const grid = document.getElementById('workspace-grid');
+        const p2 = document.getElementById('pane-2d');
+        const p3 = document.getElementById('pane-3d');
+
+        if (v === 'split') {
+          p2.classList.remove('hidden'); p3.classList.remove('hidden');
+          grid.className = 'flex-1 min-h-0 grid grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1 relative';
+        } else if (v === '2d') {
+          p2.classList.remove('hidden'); p3.classList.add('hidden');
+          grid.className = 'flex-1 min-h-0 grid grid-cols-1 grid-rows-1 relative';
+        } else {
+          p2.classList.add('hidden'); p3.classList.remove('hidden');
+          grid.className = 'flex-1 min-h-0 grid grid-cols-1 grid-rows-1 relative';
+        }
+        setTimeout(resizeThree, 60);
+      });
+    });
+
+    // Modal Planilla
+    const modal = document.getElementById('modal-planilla');
+    document.getElementById('btn-planilla').addEventListener('click', () => { modal.classList.remove('hidden'); modal.classList.add('flex'); });
+    document.getElementById('btn-close-planilla').addEventListener('click', () => { modal.classList.add('hidden'); modal.classList.remove('flex'); });
+
+    // Exportar .SVG
+    document.getElementById('btn-export-svg').addEventListener('click', () => {
+      const clone = svg.cloneNode(true);
+      const prev = clone.getElementById('capa-preview');
+      if (prev) prev.remove();
+      const xml = new XMLSerializer().serializeToString(clone);
+      const blob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'E3_Lote27_Replanteo_6.26m.svg';
+      a.click();
+    });
+
+    // Exportar .GLB
+    document.getElementById('btn-export-glb').addEventListener('click', () => {
+      const exporter = new GLTFExporter();
+      exporter.parse(bimRootGroup, (glb) => {
+        const blob = new Blob([glb], { type: 'model/gltf-binary' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'E3_Lote27_BIM_3D.glb';
+        a.click();
+      }, (err) => console.error(err), { binary: true });
+    });
+
+    // ResizeObserver & Render Loop Three.js
+    function resizeThree() {
+      const w = Math.max(threeContainer.clientWidth, 1);
+      const h = Math.max(threeContainer.clientHeight, 1);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+    new ResizeObserver(resizeThree).observe(threeContainer);
+    window.addEventListener('orientationchange', () => setTimeout(resizeThree, 200));
+
+    rebuildAll();
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
