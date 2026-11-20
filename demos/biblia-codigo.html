@@ -38,6 +38,7 @@
     padding: 16px;
     font-size: 14px;
     line-height: 1.5;
+    scroll-behavior: smooth;
   }
   .line { margin-bottom: 4px; white-space: pre-wrap; word-break: break-word; }
   .prompt { color: #7ee787; }
@@ -52,11 +53,13 @@
     background: #0d1117;
     border-top: 1px solid #30363d;
     padding: 12px 16px;
+    align-items: center;
   }
   #prompt-symbol {
     color: #7ee787;
     margin-right: 8px;
     user-select: none;
+    font-weight: bold;
   }
   #cmd {
     flex: 1;
@@ -67,18 +70,17 @@
     font-size: 14px;
     outline: none;
   }
-  .welcome { color: #8b949e; margin-bottom: 16px; }
 </style>
 </head>
 <body>
 <header>
   <h1>📜 Biblia Código</h1>
-  <span>Terminal · Escribe código para consultar la Biblia (RVR 1909)</span>
+  <span>Terminal · Consulta la Biblia (RVR 1909) mediante comandos</span>
 </header>
 <div id="output"></div>
 <div id="input-area">
   <span id="prompt-symbol">biblia></span>
-  <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="Escribe un comando...">
+  <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="Escribe un comando (ej. help, books, GET Juan 3:16)...">
 </div>
 
 <script>
@@ -86,6 +88,8 @@ const output = document.getElementById('output');
 const cmdInput = document.getElementById('cmd');
 let bibleData = null;
 let books = [];
+let commandHistory = [];
+let historyIndex = -1;
 
 function addLine(text, className = '') {
   const div = document.createElement('div');
@@ -104,17 +108,16 @@ function addHTML(html, className = '') {
 }
 
 async function loadBible() {
-  addLine('Cargando Biblia (RVR 1909)...', 'info');
+  addLine('Cargando base de datos (RVR 1909)...', 'info');
   try {
     const res = await fetch('https://raw.githubusercontent.com/livebibleis-afk/biblia-viviente/main/data/rvr1909.json');
-    if (!res.ok) throw new Error('No se pudo cargar');
+    if (!res.ok) throw new Error('No se pudo conectar al repositorio remoto');
     bibleData = await res.json();
     books = extractBooks(bibleData);
-    addLine('✓ Biblia cargada. ' + books.length + ' libros disponibles.', 'success');
+    addLine(`✓ Biblia cargada con éxito. ${books.length} libros disponibles.`, 'success');
     showHelp();
   } catch (e) {
-    addLine('Error al cargar la Biblia: ' + e.message, 'error');
-    addLine('Usando modo demo con datos limitados.', 'info');
+    addLine('Aviso: Conexión remota fallida. Activando modo demo offline.', 'error');
     bibleData = getSample();
     books = extractBooks(bibleData);
     showHelp();
@@ -150,15 +153,16 @@ function getSample() {
 
 function findVerse(bookName, chapter, verse) {
   if (!bibleData || !bibleData.books) return null;
+  const cleanQuery = bookName.trim().toLowerCase();
   const book = bibleData.books.find(b => 
-    b.name.toLowerCase().includes(bookName.toLowerCase()) ||
-    b.name.toLowerCase() === bookName.toLowerCase()
+    b.name.toLowerCase() === cleanQuery ||
+    b.name.toLowerCase().includes(cleanQuery)
   );
   if (!book) return null;
   const ch = book.chapters.find(c => c.number === chapter);
   if (!ch) return null;
   const v = ch.verses.find(vr => vr.number === verse);
-  return v ? v.text : null;
+  return v ? { bookName: book.name, text: v.text } : null;
 }
 
 function parseAndExecute(input) {
@@ -166,72 +170,62 @@ function parseAndExecute(input) {
   if (!trimmed) return;
 
   addLine('biblia> ' + trimmed, 'user');
+  commandHistory.push(trimmed);
+  historyIndex = commandHistory.length;
 
   const lower = trimmed.toLowerCase();
 
-  if (lower === 'help' || lower === 'ayuda' || lower === '?') {
+  if (['help', 'ayuda', '?'].includes(lower)) {
     showHelp();
     return;
   }
 
-  if (lower === 'books' || lower === 'libros') {
+  if (['books', 'libros'].includes(lower)) {
     addLine('Libros disponibles:', 'info');
-    addLine(books.slice(0, 20).join(', ') + (books.length > 20 ? '...' : ''), 'success');
+    addLine(books.join(', '), 'success');
     return;
   }
 
   let match = trimmed.match(/^verse\s*\(\s*["']?([^"']+)["']?\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
   if (match) {
-    const [, book, ch, v] = match;
-    const text = findVerse(book.trim(), parseInt(ch), parseInt(v));
-    if (text) {
-      addHTML(`<span class="ref">${book.trim()} ${ch}:${v}</span><br><span class="verse">${text}</span>`, 'success');
-    } else {
-      addLine(`Error: Versículo no encontrado (${book} ${ch}:${v})`, 'error');
-    }
+    executeVerseQuery(match[1], parseInt(match[2]), parseInt(match[3]));
     return;
   }
 
   match = trimmed.match(/^GET\s+(.+?)\s+(\d+):(\d+)$/i);
   if (match) {
-    const [, book, ch, v] = match;
-    const text = findVerse(book.trim(), parseInt(ch), parseInt(v));
-    if (text) {
-      addHTML(`<span class="ref">${book.trim()} ${ch}:${v}</span><br><span class="verse">${text}</span>`, 'success');
-    } else {
-      addLine(`Error: Versículo no encontrado (${book} ${ch}:${v})`, 'error');
-    }
+    executeVerseQuery(match[1], parseInt(match[2]), parseInt(match[3]));
     return;
   }
 
   match = trimmed.match(/^print\s+(.+?)\.(\d+)\.(\d+)$/i);
   if (match) {
-    const [, book, ch, v] = match;
-    const text = findVerse(book.trim(), parseInt(ch), parseInt(v));
-    if (text) {
-      addHTML(`<span class="ref">${book.trim()} ${ch}:${v}</span><br><span class="verse">${text}</span>`, 'success');
-    } else {
-      addLine(`Error: Versículo no encontrado (${book} ${ch}:${v})`, 'error');
-    }
+    executeVerseQuery(match[1], parseInt(match[2]), parseInt(match[3]));
     return;
   }
 
-  addLine('SyntaxError: Comando no reconocido. Escribe "help" para ver la sintaxis válida.', 'error');
-  addLine('El terminal solo responde a código válido.', 'info');
+  addLine(`SyntaxError: Comando o sintaxis no reconocida: "${trimmed}"`, 'error');
+  addLine('Escribe "help" para ver las opciones válidas.', 'info');
+}
+
+function executeVerseQuery(book, ch, v) {
+  const result = findVerse(book, ch, v);
+  if (result) {
+    addHTML(`<span class="ref">${result.bookName} ${ch}:${v}</span><br><span class="verse">${result.text}</span>`, 'success');
+  } else {
+    addLine(`Error: Referencia no encontrada (${book} ${ch}:${v})`, 'error');
+  }
 }
 
 function showHelp() {
-  addLine('=== Biblia Código — Sintaxis ===', 'info');
-  addLine('El terminal solo responde si escribes la sintaxis correcta:', 'info');
-  addLine('');
-  addLine('verse("Juan", 3, 16)', 'success');
-  addLine('GET Juan 3:16', 'success');
-  addLine('print Juan.3.16', 'success');
-  addLine('help', 'success');
-  addLine('books', 'success');
-  addLine('');
-  addLine('Si la sintaxis es incorrecta → SyntaxError', 'error');
-  addLine('Datos: Reina-Valera 1909 (dominio público)', 'info');
+  addLine('=== Guía de Comandos · Biblia Código ===', 'info');
+  addLine('Sintaxis permitidas para consultas:', 'info');
+  addLine('  • verse("Juan", 3, 16)', 'success');
+  addLine('  • GET Génesis 1:1', 'success');
+  addLine('  • print Juan.3.16', 'success');
+  addLine('Comandos generales:', 'info');
+  addLine('  • books  - Muestra la lista completa de libros', 'success');
+  addLine('  • help   - Muestra esta ayuda', 'success');
 }
 
 cmdInput.addEventListener('keydown', (e) => {
@@ -239,12 +233,29 @@ cmdInput.addEventListener('keydown', (e) => {
     const val = cmdInput.value;
     cmdInput.value = '';
     parseAndExecute(val);
+  } else if (e.key === 'ArrowUp') {
+    if (historyIndex > 0) {
+      historyIndex--;
+      cmdInput.value = commandHistory[historyIndex];
+    }
+    e.preventDefault();
+  } else if (e.key === 'ArrowDown') {
+    if (historyIndex < commandHistory.length - 1) {
+      historyIndex++;
+      cmdInput.value = commandHistory[historyIndex];
+    } else {
+      historyIndex = commandHistory.length;
+      cmdInput.value = '';
+    }
+    e.preventDefault();
   }
 });
 
+// Mantener el foco activo siempre en el input de la terminal
+document.addEventListener('click', () => cmdInput.focus());
+
 addLine('Bienvenido a Biblia Código', 'info');
-addLine('Un terminal donde la Biblia se consulta como código.', 'info');
-addLine('Si no escribes bien la sintaxis, el terminal da error.', 'info');
+addLine('Terminal interactiva lista.', 'info');
 addLine('');
 loadBible();
 </script>
