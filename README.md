@@ -33,6 +33,7 @@ PAGES/
 | Proyecto | Descripción | Link |
 |----------|-------------|------|
 | **Landing EXEL** | Agencia de diseño y desarrollo web | [Abrir](https://livebibleis-afk.github.io/PAGES/) |
+| **Casas del Valle · CDVN15** | Recorrido 3D de la casa (órbita y caminar) | [Abrir](https://livebibleis-afk.github.io/PAGES/casas-del-valle/) |
 | **Platanal Ingler** | Plano técnico CAD 2D / visor 3D | [Abrir](https://livebibleis-afk.github.io/PAGES/demos/platanalingler.html) |
 | **Casa** | Visualizador arquitectónico | [Abrir](https://livebibleis-afk.github.io/PAGES/demos/casa.html) |
 | **Antojos** | Menú / catálogo gastronómico | [Abrir](https://livebibleis-afk.github.io/PAGES/demos/antojos.html) |

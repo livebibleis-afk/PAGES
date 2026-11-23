@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#1a1814" />
+  <title>Recorrido 3D · CDVN15 · Casas del Valle</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231a1814'/%3E%3Crect x='4' y='3' width='5' height='10' fill='%233a3d10'/%3E%3Crect x='9' y='3' width='4' height='10' fill='%237a6d52'/%3E%3C/svg%3E" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <style>
+    :root { --safe-b: env(safe-area-inset-bottom, 0px); --safe-t: env(safe-area-inset-top, 0px); }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; height: 100%; background: #1a1814; color: #f3efe8; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; touch-action: none; overscroll-behavior: none; }
+    body { position: fixed; inset: 0; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    #hud { pointer-events: none; position: absolute; inset: 0; z-index: 5; }
+    #hud button, #hud a, #hud .seg, #joy { pointer-events: auto; }
+    header {
+      position: absolute; left: 0; right: 0; top: 0;
+      padding: calc(10px + var(--safe-t)) 12px 10px;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    }
+    .brand { display: flex; flex-direction: column; gap: 1px; text-shadow: 0 1px 8px #000c; }
+    .brand strong { font-size: 15px; letter-spacing: .02em; }
+    .brand span { font-size: 11px; color: #d8d0c4; }
+    .back {
+      color: #efe8dc; text-decoration: none; font-size: 12px;
+      background: #0007; border: 1px solid #fff2; border-radius: 999px;
+      padding: 6px 10px; backdrop-filter: blur(8px);
+    }
+    .modes {
+      display: flex; background: #0007; border: 1px solid #fff2; border-radius: 999px;
+      padding: 3px; backdrop-filter: blur(8px);
+    }
+    .modes button {
+      border: 0; background: transparent; color: #ded6c8; font: 600 12px/1 system-ui, sans-serif;
+      padding: 8px 12px; border-radius: 999px; cursor: pointer;
+    }
+    .modes button.on { background: #efe8dc; color: #1a1814; }
+    #walkBtns {
+      position: absolute; right: 12px; bottom: calc(18px + var(--safe-b));
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px; max-width: 58vw;
+    }
+    #floors, #rooms { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    #floors button, #rooms button {
+      border: 1px solid #fff2; background: #0007; color: #efe8dc; font: 600 12px/1 system-ui, sans-serif;
+      padding: 8px 11px; border-radius: 999px; cursor: pointer; backdrop-filter: blur(8px);
+    }
+    #floors button.on, #rooms button.on { background: #efe8dc; color: #1a1814; border-color: transparent; }
+    #hint {
+      position: absolute; right: 12px; left: auto; top: calc(58px + var(--safe-t));
+      font-size: 11px; color: #efe8dc; text-align: right; pointer-events: none; max-width: 70vw;
+    }
+    #hint span {
+      display: inline-block; background: #0006; border-radius: 999px;
+      padding: 6px 12px; backdrop-filter: blur(8px);
+    }
+    #walkExtras { display: none; }
+    #walkExtras.show { display: block; }
+    #joy {
+      position: absolute; left: 18px; bottom: calc(18px + var(--safe-b));
+      width: 122px; height: 122px; border-radius: 50%;
+      background: #0006; border: 1px solid #fff3; backdrop-filter: blur(8px);
+      touch-action: none;
+    }
+    #knob {
+      position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px;
+      border-radius: 50%; background: #efe8dc; box-shadow: 0 2px 8px #0006; pointer-events: none;
+    }
+    #loader {
+      position: absolute; inset: 0; z-index: 20; background: #1a1814;
+      display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+      transition: opacity .4s ease;
+    }
+    #loader.hide { opacity: 0; pointer-events: none; }
+    #loader p { margin: 0; font-size: 14px; color: #d8d0c4; }
+    #bar { width: 200px; height: 4px; background: #fff2; border-radius: 4px; overflow: hidden; }
+    #bar > i { display: block; height: 100%; width: 0; background: #efe8dc; transition: width .15s linear; }
+    #err { display: none; max-width: 280px; text-align: center; color: #f3c2b6; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <header>
+      <div>
+        <a class="back" href="../">← Inicio</a>
+        <div class="brand" style="margin-top:8px">
+          <strong>Casas del Valle</strong>
+          <span>CDVN15 · recorrido 3D</span>
+        </div>
+      </div>
+      <div class="modes" role="tablist" aria-label="Modo de vista">
+        <button id="btnOrbit" class="on" type="button">Exterior</button>
+        <button id="btnWalk" type="button">Caminar</button>
+      </div>
+    </header>
+    <div id="walkExtras">
+      <div id="walkBtns">
+        <div id="rooms"></div>
+        <div id="floors"></div>
+      </div>
+      <div id="joy" aria-label="Joystick para caminar"><div id="knob"></div></div>
+    </div>
+    <div id="hint"><span>Arrastra para orbitar · Pellizca para acercar</span></div>
+  </div>
+  <div id="loader">
+    <p id="loadMsg">Cargando la casa…</p>
+    <div id="bar"><i id="barFill"></i></div>
+    <p id="err"></p>
+  </div>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+    const MODEL = '3d/CDVN15.glb';
+    const EYE = 1.6;
+    const RADIUS = 0.22;
+    const SPEED = 2.3;
+    const ORBIT_FOV = 60;
+    const WALK_FOV = 75;
+    // Blender Z-up (x, y, z) → glTF/three Y-up (x, z, -y)
+    const FLOORS = [
+      { id: 1, label: '1.º', z: -4.99, spawn: [1.85, 1.15], yaw: 0, interior: false },
+      { id: 2, label: '2.º', z: -2.59, spawn: [5.55, 6.4], yaw: -Math.PI / 2, interior: false },
+      { id: 3, label: '3.º', z: 0, spawn: [2.80, 7.05], yaw: Math.atan2(-1.55, 1.45), target: [4.35, 8.50, 0.50], interior: true },
+      { id: 4, label: '4.º', z: 2.75, spawn: [5.55, 6.4], yaw: -Math.PI / 2, interior: false },
+    ];
+    const ROOMS = [
+      { id: 'estar', label: 'Estar', pos: [2.80, 7.05], target: [4.35, 8.50, 0.50] },
+      { id: 'dorm4', label: 'Dorm. 4', pos: [2.70, 3.70], target: [4.30, 5.40, 0.45] },
+      { id: 'estudio', label: 'Estudio', pos: [1.20, 8.55], target: [1.80, 10.10, 0.70] },
+      { id: 'bano', label: 'Baño', pos: [1.15, 3.65], target: [1.10, 4.30, 0.90] },
+    ];
+    // Stair void on the 3rd floor (Blender XY)
+    const HOLE = { x0: 0.50, x1: 1.30, y0: 4.52, y1: 7.75 };
+    const BOUNDS = { x0: -1.4, x1: 7.0, y0: -0.4, y1: 15.2 };
+
+    const errors = [];
+    window.addEventListener('error', (e) => errors.push(String(e.message || e)));
+    window.addEventListener('unhandledrejection', (e) => errors.push(String(e.reason)));
+
+    const hint = document.getElementById('hint');
+    const walkExtras = document.getElementById('walkExtras');
+    const floorsEl = document.getElementById('floors');
+    const roomsEl = document.getElementById('rooms');
+    const joyEl = document.getElementById('joy');
+    const knobEl = document.getElementById('knob');
+    const barFill = document.getElementById('barFill');
+    const loaderEl = document.getElementById('loader');
+    const errEl = document.getElementById('err');
+
+    let mode = 'orbit';
+    let floor = FLOORS[2];
+    let house, colliders = [];
+    const player = { x: 2.62, z: -7.15, yaw: Math.atan2(1.7, 1.5), pitch: -0.12 };
+    const keys = Object.create(null);
+    const stick = { x: 0, y: 0, active: false, id: null };
+    const look = { id: null, x: 0, y: 0 };
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xb7c6d4);
+    scene.fog = new THREE.Fog(0xb7c6d4, 28, 70);
+
+    const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.08, 200);
+    camera.position.set(7.4, 6.2, 10.8);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.enablePan = false;
+    controls.minDistance = 8;
+    controls.maxDistance = 36;
+    controls.minPolarAngle = 0.15;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.target.set(2.65, 0.4, -7.0);
+    controls.update();
+    controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+
+    scene.add(new THREE.HemisphereLight(0xd7e4ef, 0x6d6558, 0.7));
+    scene.add(new THREE.AmbientLight(0xfff6ea, 0.38));
+    const sun = new THREE.DirectionalLight(0xfff1d6, 2.15);
+    sun.position.set(-8, 14, 6);
+    scene.add(sun);
+    const fill = new THREE.DirectionalLight(0xc9d6ea, 0.35);
+    fill.position.set(6, 6, -8);
+    scene.add(fill);
+
+    FLOORS.forEach((f) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = f.label;
+      b.dataset.id = String(f.id);
+      b.addEventListener('click', () => setFloor(f.id));
+      floorsEl.appendChild(b);
+    });
+    ROOMS.forEach((r) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = r.label;
+      b.dataset.id = r.id;
+      b.addEventListener('click', () => setRoom(r.id));
+      roomsEl.appendChild(b);
+    });
+
+    function toThree(bx, by, bz) { return new THREE.Vector3(bx, bz, -by); }
+    function inHole(bx, by) {
+      return bx > HOLE.x0 && bx < HOLE.x1 && by > HOLE.y0 && by < HOLE.y1;
+    }
+    function setHint() {
+      const el = hint.querySelector('span') || hint;
+      el.textContent = mode === 'orbit'
+        ? 'Arrastra para orbitar · Pellizca para acercar'
+        : 'Joystick para caminar · Arrastra para mirar';
+    }
+    function markButtons() {
+      floorsEl.querySelectorAll('button').forEach((b) => b.classList.toggle('on', Number(b.dataset.id) === floor.id));
+      roomsEl.style.display = (mode === 'walk' && floor.id === 3) ? 'flex' : 'none';
+    }
+    function placePlayer(bx, by, yaw, pitch) {
+      player.x = bx;
+      player.z = -by;
+      player.yaw = yaw;
+      player.pitch = pitch || 0;
+    }
+    function applyWalkCam() {
+      const y = floor.z + EYE;
+      camera.up.set(0, 1, 0);
+      camera.position.set(player.x, y, player.z);
+      camera.quaternion.setFromEuler(new THREE.Euler(player.pitch, player.yaw, 0, 'YXZ'));
+    }
+
+    function setMode(next) {
+      mode = next === 'walk' ? 'walk' : 'orbit';
+      document.getElementById('btnOrbit').classList.toggle('on', mode === 'orbit');
+      document.getElementById('btnWalk').classList.toggle('on', mode === 'walk');
+      walkExtras.classList.toggle('show', mode === 'walk');
+      controls.enabled = mode === 'orbit';
+      camera.fov = mode === 'walk' ? WALK_FOV : ORBIT_FOV;
+      camera.updateProjectionMatrix();
+      if (mode === 'walk') {
+        if (floor.target) {
+          frameWalk(floor.spawn[0], floor.spawn[1], floor.z + EYE, floor.target[0], floor.target[1], floor.target[2]);
+        } else {
+          placePlayer(floor.spawn[0], floor.spawn[1], floor.yaw, 0);
+          applyWalkCam();
+        }
+      } else {
+        controls.target.set(2.65, floor.z + 1.2, -7.0);
+        const back = new THREE.Vector3(9.2, floor.z + 4.2, 1.8);
+        if (floor.id >= 3) back.set(9.4, 4.6, 2.2);
+        camera.position.copy(back);
+        controls.update();
+      }
+      setHint();
+      markButtons();
+    }
+
+    function setFloor(id, spawn) {
+      floor = FLOORS.find((f) => f.id === id) || FLOORS[0];
+      const s = spawn || floor.spawn;
+      const yaw = spawn && spawn.yaw != null ? spawn.yaw : floor.yaw;
+      if (mode === 'walk') {
+        if (floor.target && !spawn) {
+          frameWalk(floor.spawn[0], floor.spawn[1], floor.z + EYE, floor.target[0], floor.target[1], floor.target[2]);
+        } else {
+          placePlayer(s[0], s[1], yaw, 0);
+          applyWalkCam();
+        }
+      } else {
+        setMode('orbit');
+        controls.target.set(2.65, floor.z + 1.2, -7.0);
+        camera.position.set(9.2, floor.z + 4.2, 1.8);
+        controls.update();
+      }
+      markButtons();
+    }
+
+    function setRoom(id) {
+      const r = ROOMS.find((x) => x.id === id);
+      if (!r) return;
+      floor = FLOORS.find((f) => f.id === 3) || floor;
+      if (mode !== 'walk') setMode('walk');
+      frameWalk(r.pos[0], r.pos[1], floor.z + EYE, r.target[0], r.target[1], r.target[2]);
+      markButtons();
+      roomsEl.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.id === id));
+    }
+
+    document.getElementById('btnOrbit').addEventListener('click', () => setMode('orbit'));
+    document.getElementById('btnWalk').addEventListener('click', () => setMode('walk'));
+
+    // Joystick
+    const joyR = 61, knobR = 26;
+    function setStick(x, y) {
+      const cx = joyEl.clientWidth / 2, cy = joyEl.clientHeight / 2;
+      let dx = x - cx, dy = y - cy;
+      const m = Math.hypot(dx, dy) || 1;
+      const max = joyR - knobR / 2;
+      if (m > max) { dx *= max / m; dy *= max / m; }
+      stick.x = dx / max;
+      stick.y = dy / max;
+      knobEl.style.transform = `translate(${dx}px, ${dy}px)`;
+    }
+    function resetStick() {
+      stick.x = stick.y = 0; stick.active = false; stick.id = null;
+      knobEl.style.transform = 'translate(0,0)';
+    }
+    joyEl.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      joyEl.setPointerCapture(e.pointerId);
+      stick.active = true; stick.id = e.pointerId;
+      const r = joyEl.getBoundingClientRect();
+      setStick(e.clientX - r.left, e.clientY - r.top);
+    });
+    joyEl.addEventListener('pointermove', (e) => {
+      if (!stick.active || e.pointerId !== stick.id) return;
+      const r = joyEl.getBoundingClientRect();
+      setStick(e.clientX - r.left, e.clientY - r.top);
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => joyEl.addEventListener(t, (e) => {
+      if (e.pointerId === stick.id) resetStick();
+    }));
+
+    // Look (touch or mouse on the canvas, not the joystick)
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      if (mode !== 'walk') return;
+      if (e.target.closest && e.target.closest('#joy')) return;
+      look.id = e.pointerId; look.x = e.clientX; look.y = e.clientY;
+      renderer.domElement.setPointerCapture(e.pointerId);
+    });
+    renderer.domElement.addEventListener('pointermove', (e) => {
+      if (mode !== 'walk' || look.id !== e.pointerId) return;
+      const dx = e.clientX - look.x, dy = e.clientY - look.y;
+      look.x = e.clientX; look.y = e.clientY;
+      player.yaw -= dx * 0.005;
+      player.pitch = Math.max(-1.15, Math.min(1.15, player.pitch - dy * 0.004));
+    });
+    renderer.domElement.addEventListener('pointerup', (e) => { if (e.pointerId === look.id) look.id = null; });
+    renderer.domElement.addEventListener('pointercancel', (e) => { if (e.pointerId === look.id) look.id = null; });
+
+    window.addEventListener('keydown', (e) => { keys[e.code] = true; });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+    const down = new THREE.Vector3();
+    const from = new THREE.Vector3();
+    const to = new THREE.Vector3();
+    const dir = new THREE.Vector3();
+    const ray = new THREE.Raycaster();
+    ray.far = 1.2;
+
+    function blocked(nx, nz) {
+      const bx = nx, by = -nz;
+      if (bx < BOUNDS.x0 || bx > BOUNDS.x1 || by < BOUNDS.y0 || by > BOUNDS.y1) return true;
+      if (floor.id === 3 && inHole(bx, by)) return true;
+      const y0 = floor.z + 0.45;
+      const y1 = floor.z + 1.35;
+      from.set(player.x, y0, player.z);
+      to.set(nx, y0, nz);
+      dir.subVectors(to, from);
+      const len = dir.length();
+      if (len < 1e-4) return false;
+      dir.normalize();
+      for (const y of [y0, y1]) {
+        from.y = y;
+        ray.set(from, dir);
+        ray.far = len + RADIUS;
+        const hits = ray.intersectObjects(colliders, false);
+        if (hits.length && hits[0].distance < len + RADIUS) return true;
+      }
+      return false;
+    }
+
+    let last = performance.now();
+    function tick(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (mode === 'orbit') {
+        controls.update();
+      } else {
+        let ix = stick.x, iy = stick.y;
+        if (keys.KeyW || keys.ArrowUp) iy -= 1;
+        if (keys.KeyS || keys.ArrowDown) iy += 1;
+        if (keys.KeyA || keys.ArrowLeft) ix -= 1;
+        if (keys.KeyD || keys.ArrowRight) ix += 1;
+        const mag = Math.hypot(ix, iy);
+        if (mag > 1) { ix /= mag; iy /= mag; }
+        if (mag > 0.05) {
+          const fwdX = -Math.sin(player.yaw);
+          const fwdZ = -Math.cos(player.yaw);
+          const rightX = Math.cos(player.yaw);
+          const rightZ = -Math.sin(player.yaw);
+          // Stick up (negative y) = forward
+          const mx = (fwdX * -iy + rightX * ix) * SPEED * dt;
+          const mz = (fwdZ * -iy + rightZ * ix) * SPEED * dt;
+          const nx = player.x + mx, nz = player.z + mz;
+          if (!blocked(nx, nz)) { player.x = nx; player.z = nz; }
+          else if (!blocked(nx, player.z)) player.x = nx;
+          else if (!blocked(player.x, nz)) player.z = nz;
+        }
+        applyWalkCam();
+      }
+      renderer.render(scene, camera);
+      requestAnimationFrame(tick);
+    }
+
+    function onResize() {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    }
+    window.addEventListener('resize', onResize);
+
+    const draco = new DRACOLoader();
+    draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/');
+    const loader = new GLTFLoader();
+    loader.setDRACOLoader(draco);
+    loader.manager.onProgress = (url, loaded, total) => {
+      const p = total ? Math.round((loaded / total) * 100) : 0;
+      barFill.style.width = p + '%';
+    };
+
+    loader.load(MODEL, (gltf) => {
+      house = gltf.scene;
+      house.traverse((o) => {
+        if (!o.isMesh) return;
+        const n = (o.name || '') + ' ' + ((o.parent && o.parent.name) || '');
+        if (/base[_\s-]?neutra/i.test(n)) { o.visible = false; return; }
+        o.castShadow = false;
+        o.receiveShadow = false;
+        if (o.material) {
+          const mats = Array.isArray(o.material) ? o.material : [o.material];
+          mats.forEach((m) => {
+            if (m && m.transparent && m.opacity < 0.95) m.depthWrite = false;
+          });
+        }
+        if (o.visible) colliders.push(o);
+      });
+      scene.add(house);
+      const pad = new THREE.Mesh(
+        new THREE.CircleGeometry(22, 48),
+        new THREE.MeshStandardMaterial({ color: 0x8a8984, roughness: 1 })
+      );
+      pad.rotation.x = -Math.PI / 2;
+      pad.position.set(2.6, -4.99, -7.0);
+      scene.add(pad);
+      barFill.style.width = '100%';
+      setTimeout(() => loaderEl.classList.add('hide'), 200);
+      window.__tour.ready = true;
+      requestAnimationFrame(tick);
+    }, undefined, (err) => {
+      document.getElementById('loadMsg').textContent = 'No se pudo cargar el modelo';
+      errEl.style.display = 'block';
+      errEl.textContent = String(err && err.message || err);
+      errors.push(String(err));
+    });
+
+    function frameWalk(bx, by, bz, tx, ty, tz) {
+      if (mode !== 'walk') setMode('walk');
+      camera.fov = WALK_FOV;
+      camera.updateProjectionMatrix();
+      const p = toThree(bx, by, bz);
+      const t = toThree(tx, ty, tz);
+      const dx = t.x - p.x, dy = t.y - p.y, dz = t.z - p.z;
+      player.x = p.x;
+      player.z = p.z;
+      // YXZ look dir = (-sin(yaw)*cos(pitch), sin(pitch), -cos(yaw)*cos(pitch))
+      player.yaw = Math.atan2(-dx, -dz);
+      player.pitch = Math.atan2(dy, Math.hypot(dx, dz));
+      applyWalkCam();
+    }
+
+    // Test helpers (also handy on a computer: WASD)
+    window.__tour = {
+      frameWalk,
+      debug: () => ({
+        mode, floor: floor.id,
+        player: { x: player.x, z: player.z, yaw: player.yaw, pitch: player.pitch },
+        cam: {
+          pos: camera.position.toArray(),
+          up: camera.up.toArray(),
+          rot: [camera.rotation.x, camera.rotation.y, camera.rotation.z, camera.rotation.order],
+        },
+      }),
+
+      ready: false,
+      errors,
+      get mode() { return mode; },
+      get floor() { return floor.id; },
+      setMode,
+      setFloor,
+      setRoom,
+      setView(name) {
+        if (name === 'frente' || name === 'front') {
+          setMode('orbit');
+          controls.target.set(2.55, 0.3, -7.0);
+          camera.position.set(7.6, 6.4, 11.2);
+          controls.update();
+        } else if (name === 'posterior' || name === 'rear') {
+          setMode('orbit');
+          controls.target.set(2.65, 0.7, -11.2);
+          camera.position.set(4.8, 5.4, -26.0);
+          controls.update();
+        } else if (name === 'estar') {
+          setMode('walk');
+          setRoom('estar');
+        }
+      },
+    };
+
+    markButtons();
+    setHint();
+  </script>
+</body>
+</html>
