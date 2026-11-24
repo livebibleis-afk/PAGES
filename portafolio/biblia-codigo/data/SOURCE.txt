@@ -1,0 +1,23 @@
+Reina Valera 1909 (RV1909 / RVR 1909)
+=====================================
+
+Texto bíblico: dominio público.
+Licencia de esta copia digital: CC0 1.0 Universal
+  https://creativecommons.org/public-domain/cc0/
+
+Fuente: BibleAquifer/ReinaValera1909, publicación v2026-09-18
+  https://github.com/BibleAquifer/ReinaValera1909
+  https://github.com/BibleAquifer/ReinaValera1909/releases/tag/v2026-09-18
+  Archivo descargado: Spanish-json.zip
+  (resource_metadata.license_info: "Public Domain CC0";
+   scripture_burrito.copyright: "The Reina Valera 1909 is in the Public Domain")
+
+Se compactó el JSON original (esquema Aquifer, un objeto por versículo
+con marcado HTML) a un archivo por libro, con solo el texto de cada
+versículo, para cargar cada libro bajo demanda. Se conservó la
+ortografía de 1909 (á, fué, crió, etc.). La tipografía en mayúsculas
+de la palabra inicial de algunos capítulos (EN, EMPERO, JEHOVÁ) se
+pasó a caja de oración (En, Empero, Jehová) para la práctica.
+
+Estos archivos se incluyen junto a la página para uso local; no se
+consulta ninguna API externa al memorizar.

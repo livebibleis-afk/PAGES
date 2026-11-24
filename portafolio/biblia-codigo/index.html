@@ -2,276 +2,861 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Biblia Código · Terminal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Biblia Código">
+<meta name="description" content="Entrena la memoria de versículos bíblicos. Texto Reina Valera 1909, dominio público.">
+<title>Biblia Código · Memorizar</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --blue: #58a6ff;
+    --cyan: #79c0ff;
+    --green: #7ee787;
+    --green-dim: #3fb950;
+    --red: #f85149;
+    --orange: #ffa657;
+    --purple: #d2a8ff;
+    --btn: #21262d;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
   body {
-    background: #0d1117;
-    color: #c9d1d9;
-    font-family: 'Courier New', Courier, monospace;
-    height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Courier New", monospace;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    padding: var(--safe-t) 0 var(--safe-b);
   }
   header {
-    background: #161b22;
-    padding: 12px 16px;
-    border-bottom: 1px solid #30363d;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px 8px;
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 8px;
   }
-  header h1 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #58a6ff;
-  }
-  header span {
+  header .top { display: flex; align-items: center; gap: 10px; }
+  header .brand { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+  header h1 { font-size: 16px; font-weight: 600; color: var(--blue); white-space: nowrap; }
+  header .sub { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .home {
+    color: var(--muted);
+    text-decoration: none;
     font-size: 12px;
-    color: #8b949e;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 8px;
   }
-  #output {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    font-size: 14px;
-    line-height: 1.5;
-    scroll-behavior: smooth;
-  }
-  .line { margin-bottom: 4px; white-space: pre-wrap; word-break: break-word; }
-  .prompt { color: #7ee787; }
-  .user { color: #79c0ff; }
-  .error { color: #f85149; }
-  .success { color: #7ee787; }
-  .info { color: #d2a8ff; }
-  .verse { color: #ffa657; }
-  .ref { color: #79c0ff; font-weight: bold; }
-  #input-area {
+  .stats {
     display: flex;
-    background: #0d1117;
-    border-top: 1px solid #30363d;
-    padding: 12px 16px;
-    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    justify-content: space-between;
   }
-  #prompt-symbol {
-    color: #7ee787;
-    margin-right: 8px;
-    user-select: none;
-    font-weight: bold;
-  }
-  #cmd {
+  .stats b { color: var(--green); font-weight: 600; }
+  main {
     flex: 1;
-    background: transparent;
-    border: none;
-    color: #c9d1d9;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 14px 16px;
+    gap: 10px;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .modes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  @media (min-width: 520px) {
+    .modes { grid-template-columns: repeat(4, 1fr); }
+  }
+  .modes button, .btn, .go {
     font-family: inherit;
     font-size: 14px;
+    color: var(--text);
+    background: var(--btn);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    min-height: 48px;
+    padding: 10px 12px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .modes button[aria-pressed="true"] {
+    border-color: var(--blue);
+    color: var(--cyan);
+    background: #0d2137;
+  }
+  .picker {
+    display: none;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .picker.open { display: flex; }
+  .picker input, textarea {
+    font-family: inherit;
+    font-size: 16px;
+    color: var(--text);
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    width: 100%;
     outline: none;
   }
+  .picker input:focus, textarea:focus { border-color: var(--blue); }
+  .go { flex: 0 0 auto; color: var(--green); min-width: 88px; }
+  .prompt-line {
+    color: var(--green);
+    font-size: 14px;
+    word-break: break-word;
+  }
+  .prompt-line .cmd { color: var(--cyan); }
+  .prompt-line .meta { color: var(--muted); font-size: 12px; }
+  #answer {
+    min-height: 132px;
+    resize: vertical;
+    line-height: 1.55;
+    flex: 0 0 auto;
+  }
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .btn-primary {
+    grid-column: 1 / -1;
+    background: #0f3d24;
+    border-color: #238636;
+    color: var(--green);
+    font-weight: 600;
+    font-size: 16px;
+  }
+  .btn-primary:disabled, .btn:disabled { opacity: 0.45; cursor: default; }
+  #btn-next { color: var(--cyan); border-color: #1f4b7a; background: #0d2137; }
+  #feedback {
+    min-height: 3em;
+    font-size: 14px;
+    word-break: break-word;
+  }
+  .ok { color: var(--green); }
+  .bad { color: var(--red); }
+  .info { color: var(--purple); }
+  .verse { color: var(--orange); }
+  .muted { color: var(--muted); }
+  .pct { color: var(--cyan); }
+  .diff { margin-top: 8px; line-height: 1.7; }
+  .diff .hit { color: var(--green); }
+  .diff .miss { color: var(--orange); text-decoration: underline; text-decoration-style: dotted; }
+  .diff .wrong { color: var(--red); text-decoration: line-through; }
+  .hint { color: var(--purple); white-space: pre-wrap; margin-top: 6px; }
+  .log {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .log a { color: var(--blue); }
+  .boot { color: var(--muted); }
+  .error { color: var(--red); }
 </style>
 </head>
 <body>
 <header>
-  <h1>📜 Biblia Código</h1>
-  <span>Terminal Offline · RVR 1909</span>
+  <div class="top">
+    <a class="home" href="../../">← Inicio</a>
+    <div class="brand">
+      <h1>Biblia Código</h1>
+      <span class="sub">Entrenador · RVR 1909</span>
+    </div>
+  </div>
+  <div class="stats" id="stats" aria-live="polite"></div>
 </header>
-<div id="output"></div>
-<div id="input-area">
-  <span id="prompt-symbol">biblia></span>
-  <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="Escribe un comando (ej. help, books, GET Juan 3:16)...">
-</div>
-
+<main>
+  <div class="modes" role="tablist" aria-label="Cómo practicar">
+    <button type="button" id="mode-favorites" aria-pressed="true">Favoritos</button>
+    <button type="button" id="mode-chapter" aria-pressed="false">Capítulo</button>
+    <button type="button" id="mode-random" aria-pressed="false">Al azar</button>
+    <button type="button" id="mode-custom" aria-pressed="false">Referencia</button>
+  </div>
+  <form class="picker" id="picker" autocomplete="off">
+    <input id="ref-input" type="text" enterkeyhint="go" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Ej. jn 3:16, sal 23, pr 3:5-6">
+    <button class="go" type="submit" id="ref-go">Ir</button>
+  </form>
+  <div id="boot" class="boot">Cargando Reina Valera 1909…</div>
+  <div class="prompt-line" id="prompt" hidden></div>
+  <label class="muted" for="answer" id="answer-label" hidden>Escribe el versículo de memoria</label>
+  <textarea id="answer" hidden rows="5" enterkeyhint="done" autocapitalize="sentences" autocorrect="on" spellcheck="true" placeholder="Escribe o dicta el versículo…"></textarea>
+  <div class="actions" id="actions" hidden>
+    <button type="button" class="btn btn-primary" id="btn-check">Comprobar</button>
+    <button type="button" class="btn" id="btn-hint">Pista</button>
+    <button type="button" class="btn" id="btn-reveal">Ver versículo</button>
+    <button type="button" class="btn" id="btn-next" hidden>Siguiente</button>
+  </div>
+  <div id="feedback" aria-live="polite"></div>
+  <p class="log">
+    Texto: Reina Valera 1909 (dominio público, CC0).
+    Fuente: <a href="https://github.com/BibleAquifer/ReinaValera1909" target="_blank" rel="noopener">BibleAquifer</a>.
+    Se ignoran tildes, mayúsculas y signos; un 95 % o más cuenta como correcto.
+  </p>
+</main>
 <script>
-const output = document.getElementById('output');
-const cmdInput = document.getElementById('cmd');
-let commandHistory = [];
-let historyIndex = -1;
+/* Texto RVR 1909 de data/, compactado desde BibleAquifer/ReinaValera1909
+   v2026-09-18 (dominio público, CC0 1.0). Ver data/SOURCE.txt. */
+(function () {
+  const DATA = 'data/';
+  const STORE = 'biblia-codigo-progress-v1';
+  const FAVORITES = [
+    'Juan 3:16',
+    'Salmos 23',
+    'Proverbios 3:5-6',
+    'Génesis 1:1',
+    'Juan 1:1',
+    'Romanos 3:23',
+    'Romanos 6:23',
+    'Efesios 2:8-9',
+    'Filipenses 4:13',
+    'Hebreos 11:1',
+    'Josué 1:9',
+    'Salmos 119:105',
+    'Isaías 40:31',
+    'Jeremías 29:11',
+    'Mateo 6:33',
+    'Mateo 11:28',
+    'Juan 14:6',
+    'Hechos 1:8',
+    'Romanos 8:28',
+    'Romanos 10:9',
+    'Romanos 12:1-2',
+    'Filipenses 4:6-7',
+    '2 Timoteo 3:16',
+    '1 Juan 1:9'
+  ];
 
-// Base de datos interna autónoma (RVR 1909 incorporada)
-const bibleData = {
-  books: [
-    {
-      name: "Génesis",
-      chapters: [
-        { 
-          number: 1, 
-          verses: [
-            { number: 1, text: "En el principio creó Dios los cielos y la tierra." },
-            { number: 27, text: "Y creó Dios al hombre a su imagen, a imagen de Dios lo creó; varón y hembra los creó." }
-          ] 
-        }
-      ]
-    },
-    {
-      name: "Juan",
-      chapters: [
-        { 
-          number: 1, 
-          verses: [
-            { number: 1, text: "En el principio era el Verbo, y el Verbo era con Dios, y el Verbo era Dios." }
-          ] 
-        },
-        { 
-          number: 3, 
-          verses: [
-            { number: 16, text: "Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree, no se pierda, mas tenga vida eterna." }
-          ] 
-        }
-      ]
-    },
-    {
-      name: "Salmos",
-      chapters: [
-        { 
-          number: 23, 
-          verses: [
-            { number: 1, text: "Jehová es mi pastor; nada me faltará." },
-            { number: 2, text: "En lugares de delicados pastos me hará descansar; junto a aguas de reposo me pastoreará." }
-          ] 
-        }
-      ]
-    },
-    {
-      name: "Proverbios",
-      chapters: [
-        { 
-          number: 3, 
-          verses: [
-            { number: 5, text: "Fíate de Jehová de todo tu corazón, y no te apoyes en tu propia prudencia." },
-            { number: 6, text: "Reconócelo en todos tus caminos, y él enderezará tus veredas." }
-          ] 
-        }
-      ]
+  const els = {
+    boot: document.getElementById('boot'),
+    prompt: document.getElementById('prompt'),
+    answer: document.getElementById('answer'),
+    answerLabel: document.getElementById('answer-label'),
+    actions: document.getElementById('actions'),
+    feedback: document.getElementById('feedback'),
+    stats: document.getElementById('stats'),
+    picker: document.getElementById('picker'),
+    refInput: document.getElementById('ref-input'),
+    btnCheck: document.getElementById('btn-check'),
+    btnHint: document.getElementById('btn-hint'),
+    btnReveal: document.getElementById('btn-reveal'),
+    btnNext: document.getElementById('btn-next'),
+    modes: {
+      favorites: document.getElementById('mode-favorites'),
+      chapter: document.getElementById('mode-chapter'),
+      random: document.getElementById('mode-random'),
+      custom: document.getElementById('mode-custom')
     }
-  ]
-};
+  };
 
-const books = bibleData.books.map(b => b.name);
+  let manifest = null;
+  const bookCache = new Map();
+  let aliasIndex = [];
+  let mode = 'favorites';
+  let queue = [];
+  let index = 0;
+  let hintCount = 0;
+  let revealed = false;
+  let checkedOk = false;
+  let progress = loadProgress();
 
-function addLine(text, className = '') {
-  const div = document.createElement('div');
-  div.className = 'line ' + className;
-  div.textContent = text;
-  output.appendChild(div);
-  output.scrollTop = output.scrollHeight;
-}
-
-function addHTML(html, className = '') {
-  const div = document.createElement('div');
-  div.className = 'line ' + className;
-  div.innerHTML = html;
-  output.appendChild(div);
-  output.scrollTop = output.scrollHeight;
-}
-
-function findVerse(bookName, chapter, verse) {
-  const cleanQuery = bookName.trim().toLowerCase();
-  const book = bibleData.books.find(b => 
-    b.name.toLowerCase() === cleanQuery ||
-    b.name.toLowerCase().includes(cleanQuery)
-  );
-  if (!book) return null;
-  const ch = book.chapters.find(c => c.number === chapter);
-  if (!ch) return null;
-  const v = ch.verses.find(vr => vr.number === verse);
-  return v ? { bookName: book.name, text: v.text } : null;
-}
-
-function parseAndExecute(input) {
-  const trimmed = input.trim();
-  if (!trimmed) return;
-
-  addLine('biblia> ' + trimmed, 'user');
-  commandHistory.push(trimmed);
-  historyIndex = commandHistory.length;
-
-  const lower = trimmed.toLowerCase();
-
-  if (['help', 'ayuda', '?'].includes(lower)) {
-    showHelp();
-    return;
+  function loadProgress() {
+    try {
+      const raw = localStorage.getItem(STORE);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p && typeof p === 'object') {
+          return {
+            memorized: p.memorized || {},
+            streak: p.streak || 0,
+            bestStreak: p.bestStreak || 0,
+            score: p.score || 0,
+            attempts: p.attempts || 0,
+            correct: p.correct || 0
+          };
+        }
+      }
+    } catch (e) { /* ignore corrupt store */ }
+    return { memorized: {}, streak: 0, bestStreak: 0, score: 0, attempts: 0, correct: 0 };
   }
 
-  if (['books', 'libros'].includes(lower)) {
-    addLine('Libros disponibles en este módulo:', 'info');
-    addLine(books.join(', '), 'success');
-    return;
+  function saveProgress() {
+    localStorage.setItem(STORE, JSON.stringify(progress));
+    renderStats();
   }
 
-  let match = trimmed.match(/^verse\s*\(\s*["']?([^"']+)["']?\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
-  if (match) {
-    executeVerseQuery(match[1], parseInt(match[2]), parseInt(match[3]));
-    return;
+  function renderStats() {
+    const n = Object.keys(progress.memorized).length;
+    els.stats.innerHTML =
+      '<span>Memorizados <b>' + n + '</b></span>' +
+      '<span>Racha <b>' + progress.streak + '</b></span>' +
+      '<span>Puntos <b>' + progress.score + '</b></span>';
   }
 
-  match = trimmed.match(/^GET\s+(.+?)\s+(\d+):(\d+)$/i);
-  if (match) {
-    executeVerseQuery(match[1], parseInt(match[2]), parseInt(match[3]));
-    return;
+  function fold(s) {
+    return String(s)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[´`'']/g, '');
   }
 
-  match = trimmed.match(/^print\s+(.+?)\.(\d+)\.(\d+)$/i);
-  if (match) {
-    executeVerseQuery(match[1], parseInt(match[2]), parseInt(match[3]));
-    return;
+  function normalize(s) {
+    return fold(s)
+      .replace(/[^a-z0-9ñ\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
-  addLine(`SyntaxError: Comando o sintaxis no reconocida: "${trimmed}"`, 'error');
-  addLine('Escribe "help" para ver las opciones válidas.', 'info');
-}
-
-function executeVerseQuery(book, ch, v) {
-  const result = findVerse(book, ch, v);
-  if (result) {
-    addHTML(`<span class="ref">${result.bookName} ${ch}:${v}</span><br><span class="verse">${result.text}</span>`, 'success');
-  } else {
-    addLine(`Error: Referencia no encontrada (${book} ${ch}:${v})`, 'error');
+  function words(s) {
+    const n = normalize(s);
+    return n ? n.split(' ') : [];
   }
-}
 
-function showHelp() {
-  addLine('=== Guía de Comandos · Biblia Código ===', 'info');
-  addLine('Sintaxis permitidas:', 'info');
-  addLine('  • verse("Juan", 3, 16)', 'success');
-  addLine('  • GET Salmos 23:1', 'success');
-  addLine('  • print Proverbios.3.5', 'success');
-  addLine('Comandos generales:', 'info');
-  addLine('  • books  - Muestra la lista de libros', 'success');
-  addLine('  • help   - Muestra esta ayuda', 'success');
-}
-
-cmdInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    const val = cmdInput.value;
-    cmdInput.value = '';
-    parseAndExecute(val);
-  } else if (e.key === 'ArrowUp') {
-    if (historyIndex > 0) {
-      historyIndex--;
-      cmdInput.value = commandHistory[historyIndex];
+  function levenshtein(a, b) {
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    if (a.length > b.length) { const t = a; a = b; b = t; }
+    const row = new Array(a.length + 1);
+    for (let i = 0; i <= a.length; i++) row[i] = i;
+    for (let j = 1; j <= b.length; j++) {
+      let prev = row[0];
+      row[0] = j;
+      for (let i = 1; i <= a.length; i++) {
+        const tmp = row[i];
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        row[i] = Math.min(row[i] + 1, row[i - 1] + 1, prev + cost);
+        prev = tmp;
+      }
     }
-    e.preventDefault();
-  } else if (e.key === 'ArrowDown') {
-    if (historyIndex < commandHistory.length - 1) {
-      historyIndex++;
-      cmdInput.value = commandHistory[historyIndex];
+    return row[a.length];
+  }
+
+  function similarWord(a, b) {
+    if (a === b) return true;
+    const maxLen = Math.max(a.length, b.length);
+    if (!maxLen) return true;
+    const d = levenshtein(a, b);
+    if (d <= 1) return true;
+    return d / maxLen <= 0.2;
+  }
+
+  function stripInscription(text) {
+    const m = text.match(/^(Salmo[^\.]*|C[aá]ntico[^\.]*|Al m[uú]sico[^\.]*|Para el[^\.]{0,40}|Masquil[^\.]*|Mictam[^\.]*)\.\s+/i);
+    return m ? text.slice(m[0].length) : text;
+  }
+
+  function charRatio(a, b) {
+    if (a === b) return 1;
+    const maxLen = Math.max(a.length, b.length);
+    if (!maxLen) return 1;
+    if (maxLen > 800) {
+      // Avoid a heavy matrix on very long verses; fall back to word score only later.
+      return 0;
+    }
+    return 1 - levenshtein(a, b) / maxLen;
+  }
+
+  function wordRatio(expected, actual) {
+    const ew = words(expected);
+    const aw = words(actual);
+    if (!ew.length) return aw.length ? 0 : 1;
+    let hits = 0;
+    let used = new Array(aw.length).fill(false);
+    for (const w of ew) {
+      let found = -1;
+      for (let i = 0; i < aw.length; i++) {
+        if (!used[i] && similarWord(w, aw[i])) { found = i; break; }
+      }
+      if (found >= 0) { used[found] = true; hits++; }
+    }
+    return hits / Math.max(ew.length, aw.length);
+  }
+
+  function scoreAgainst(expected, actual) {
+    const e = normalize(expected);
+    const a = normalize(actual);
+    const wr = wordRatio(e, a);
+    const cr = charRatio(e, a);
+    return Math.max(wr, cr);
+  }
+
+  function matchScore(expected, actual) {
+    const full = scoreAgainst(expected, actual);
+    const body = stripInscription(expected);
+    if (body !== expected) {
+      return Math.max(full, scoreAgainst(body, actual));
+    }
+    return full;
+  }
+
+  function alignWords(expected, actual) {
+    const ew = expected.trim() ? expected.trim().split(/\s+/) : [];
+    const aw = actual.trim() ? actual.trim().split(/\s+/) : [];
+    const n = ew.length, m = aw.length;
+    const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+    for (let i = n - 1; i >= 0; i--) {
+      for (let j = m - 1; j >= 0; j--) {
+        const eq = similarWord(normalize(ew[i]), normalize(aw[j]));
+        dp[i][j] = eq ? 1 + dp[i + 1][j + 1] : Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
+    }
+    const out = [];
+    let i = 0, j = 0;
+    while (i < n || j < m) {
+      if (i < n && j < m && similarWord(normalize(ew[i]), normalize(aw[j]))) {
+        out.push({ type: 'hit', text: aw[j] });
+        i++; j++;
+      } else if (j < m && (i === n || dp[i][j + 1] >= dp[i + 1][j])) {
+        out.push({ type: 'wrong', text: aw[j] });
+        j++;
+      } else {
+        out.push({ type: 'miss', text: ew[i] });
+        i++;
+      }
+    }
+    return out;
+  }
+
+  function percent(score) {
+    return Math.round(score * 100);
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function current() {
+    return queue[index] || null;
+  }
+
+  function refKey(item) {
+    return item.bookName + ' ' + item.chapter + ':' + item.verse;
+  }
+
+  async function loadManifest() {
+    const res = await fetch(DATA + 'manifest.json');
+    if (!res.ok) throw new Error('No se pudo cargar el índice de la Biblia.');
+    manifest = await res.json();
+    aliasIndex = [];
+    for (const book of manifest.books) {
+      const aliases = (book.aliases || []).concat(book.name, book.id);
+      for (const a of aliases) {
+        const f = fold(a).replace(/\s+/g, ' ').trim();
+        if (f) aliasIndex.push({ alias: f, book });
+      }
+    }
+    aliasIndex.sort((a, b) => b.alias.length - a.alias.length);
+  }
+
+  async function loadBook(id) {
+    if (bookCache.has(id)) return bookCache.get(id);
+    const res = await fetch(DATA + 'books/' + id + '.json');
+    if (!res.ok) throw new Error('No se pudo cargar el libro.');
+    const book = await res.json();
+    bookCache.set(id, book);
+    return book;
+  }
+
+  function parseReference(input) {
+    if (!manifest) return { error: 'Todavía se está cargando el texto.' };
+    let q = fold(input)
+      .replace(/[.,;]/g, ' ')
+      .replace(/\s*:\s*/g, ':')
+      .replace(/\s*[-–—]+\s*/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!q) return { error: 'Escribe una referencia, por ejemplo jn 3:16 o sal 23.' };
+    let found = null;
+    for (const entry of aliasIndex) {
+      if (q === entry.alias || q.startsWith(entry.alias + ' ') || q.startsWith(entry.alias + ':')) {
+        found = entry;
+        break;
+      }
+    }
+    if (!found) return { error: 'No reconozco ese libro. Prueba con una abreviatura, como jn, sal o rom.' };
+    let rest = q.slice(found.alias.length).trim();
+    if (rest.startsWith(':')) rest = rest.slice(1).trim();
+    const book = found.book;
+    if (!rest) return { error: 'Indica el capítulo, por ejemplo ' + book.name + ' 23 o ' + book.name + ' 3:16.' };
+    const m = rest.match(/^(\d+)(?::(\d+)(?:-(\d+))?)?$/);
+    if (!m) return { error: 'No entiendo la referencia. Ejemplos: jn 3:16, pr 3:5-6, sal 23.' };
+    const chapter = parseInt(m[1], 10);
+    if (chapter < 1 || chapter > book.chapters) {
+      return { error: book.name + ' tiene ' + book.chapters + ' capítulo' + (book.chapters === 1 ? '' : 's') + '.' };
+    }
+    return {
+      book,
+      chapter,
+      from: m[2] ? parseInt(m[2], 10) : null,
+      to: m[3] ? parseInt(m[3], 10) : (m[2] ? parseInt(m[2], 10) : null)
+    };
+  }
+
+  function versesFromParsed(parsed) {
+    const book = parsed.book;
+    const n = book.verseCounts[parsed.chapter - 1];
+    if (!n) throw new Error('Capítulo no encontrado.');
+    const from = parsed.from || 1;
+    const to = parsed.to || n;
+    if (from < 1 || to > n || from > to) {
+      throw new Error(book.name + ' ' + parsed.chapter + ' tiene ' + n + ' versículos.');
+    }
+    const items = [];
+    for (let v = from; v <= to; v++) {
+      items.push({
+        bookId: book.id,
+        bookName: book.name,
+        chapter: parsed.chapter,
+        verse: v,
+        text: null
+      });
+    }
+    return items;
+  }
+
+  async function ensureText(item) {
+    if (!item) return '';
+    if (item.text) return item.text;
+    const book = await loadBook(item.bookId);
+    const ch = book.chapters[item.chapter - 1];
+    if (!ch || !ch[item.verse - 1]) throw new Error('Versículo no encontrado.');
+    item.text = ch[item.verse - 1];
+    return item.text;
+  }
+
+  function buildFavorites() {
+    const items = [];
+    for (const ref of FAVORITES) {
+      const parsed = parseReference(ref);
+      if (parsed.error) throw new Error('Favorito inválido: ' + ref + ' — ' + parsed.error);
+      items.push.apply(items, versesFromParsed(parsed));
+    }
+    return items;
+  }
+
+  async function randomVerse() {
+    const bookMeta = manifest.books[Math.floor(Math.random() * manifest.books.length)];
+    const book = await loadBook(bookMeta.id);
+    const chIndex = Math.floor(Math.random() * book.chapters.length);
+    const ch = book.chapters[chIndex];
+    const vIndex = Math.floor(Math.random() * ch.length);
+    return [{
+      bookId: book.id,
+      bookName: bookMeta.name,
+      chapter: chIndex + 1,
+      verse: vIndex + 1,
+      text: ch[vIndex]
+    }];
+  }
+
+  function setMode(next) {
+    mode = next;
+    for (const [key, btn] of Object.entries(els.modes)) {
+      btn.setAttribute('aria-pressed', key === next ? 'true' : 'false');
+    }
+    const needsPicker = next === 'chapter' || next === 'custom';
+    els.picker.classList.toggle('open', needsPicker);
+    if (next === 'chapter') {
+      els.refInput.placeholder = 'Capítulo, ej. sal 23 o jn 3';
+    } else if (next === 'custom') {
+      els.refInput.placeholder = 'Ej. jn 3:16, pr 3:5-6, 1 jn 1:9';
+    }
+    if (needsPicker) els.refInput.focus();
+  }
+
+  function initials(text) {
+    return text.replace(/\p{L}\p{M}*/gu, function (ch, offset, str) {
+      // Keep the first letter of each word; replace the rest with a middle dot.
+      const prev = str.slice(0, offset).slice(-1);
+      const start = !prev || /\s/.test(prev);
+      if (start) return ch;
+      return '·';
+    });
+  }
+
+  function renderPrompt() {
+    const item = current();
+    if (!item) {
+      els.prompt.hidden = true;
+      return;
+    }
+    const total = queue.length;
+    const label = mode === 'favorites' ? 'favoritos' :
+      mode === 'chapter' ? 'capítulo' :
+      mode === 'random' ? 'al azar' : 'referencia';
+    const mem = progress.memorized[refKey(item)] ? ' · ya memorizado' : '';
+    els.prompt.hidden = false;
+    els.prompt.innerHTML =
+      '<div><span class="muted">biblia&gt;</span> <span class="cmd">memorizar ' +
+      escapeHtml(refKey(item)) + '</span></div>' +
+      '<div class="meta">' + (index + 1) + ' / ' + total + ' · ' + label + mem + '</div>';
+  }
+
+  function showPractice() {
+    els.boot.hidden = true;
+    els.answer.hidden = false;
+    els.answerLabel.hidden = false;
+    els.actions.hidden = false;
+    renderPrompt();
+    renderStats();
+  }
+
+  function resetAttempt() {
+    hintCount = 0;
+    revealed = false;
+    checkedOk = false;
+    els.answer.value = '';
+    els.feedback.innerHTML = '';
+    els.btnNext.hidden = true;
+    els.btnCheck.disabled = false;
+    els.btnHint.disabled = false;
+    els.btnReveal.disabled = false;
+    renderPrompt();
+    els.answer.focus();
+  }
+
+  async function startQueue(items) {
+    if (!items.length) {
+      els.feedback.innerHTML = '<span class="bad">No hay versículos en esa selección.</span>';
+      return;
+    }
+    queue = items;
+    index = 0;
+    showPractice();
+    await ensureText(current());
+    resetAttempt();
+  }
+
+  async function startFavorites() {
+    setMode('favorites');
+    await startQueue(buildFavorites());
+  }
+
+  async function startRandom() {
+    setMode('random');
+    await startQueue(await randomVerse());
+  }
+
+  async function startFromInput() {
+    const parsed = parseReference(els.refInput.value);
+    if (parsed.error) {
+      els.feedback.innerHTML = '<span class="bad">' + escapeHtml(parsed.error) + '</span>';
+      els.refInput.focus();
+      return;
+    }
+    try {
+      const items = versesFromParsed(parsed);
+      await startQueue(items);
+    } catch (err) {
+      els.feedback.innerHTML = '<span class="bad">' + escapeHtml(err.message || String(err)) + '</span>';
+    }
+  }
+
+  function hintText(item) {
+    if (hintCount === 1) {
+      return 'Iniciales: ' + initials(item.text);
+    }
+    const w = item.text.split(/(\s+)/);
+    const letters = w.filter(function (t) { return !/^\s+$/.test(t); });
+    const revealN = Math.min(letters.length, hintCount - 1);
+    let seen = 0;
+    let out = '';
+    for (const tok of w) {
+      if (/^\s+$/.test(tok)) { out += tok; continue; }
+      seen++;
+      if (seen <= revealN) out += tok;
+      else out += initials(tok);
+    }
+    return 'Pista: ' + out;
+  }
+
+  function showHint() {
+    const item = current();
+    if (!item || checkedOk) return;
+    hintCount++;
+    const block = '<div class="hint">' + escapeHtml(hintText(item)) + '</div>';
+    const prev = els.feedback.querySelector('.hint');
+    if (prev) prev.parentNode.removeChild(prev);
+    els.feedback.insertAdjacentHTML('beforeend', block);
+  }
+
+  function showReveal() {
+    const item = current();
+    if (!item) return;
+    revealed = true;
+    els.feedback.innerHTML =
+      '<div class="info">Versículo completo:</div>' +
+      '<div class="verse">' + escapeHtml(refKey(item)) + ' · ' + escapeHtml(item.text) + '</div>' +
+      '<div class="muted">Léelo con calma y vuelve a escribirlo, o sigue al siguiente.</div>';
+    els.btnNext.hidden = false;
+  }
+
+  function renderDiff(item, actual) {
+    const parts = alignWords(item.text, actual);
+    let lastUser = -1;
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i].type !== 'miss') lastUser = i;
+    }
+    const shown = parts.slice(0, lastUser + 1);
+    const hidden = parts.slice(lastUser + 1).filter(function (p) { return p.type === 'miss'; });
+    let html = shown.map(function (p) {
+      const cls = p.type === 'hit' ? 'hit' : p.type === 'wrong' ? 'wrong' : 'miss';
+      return '<span class="' + cls + '">' + escapeHtml(p.text) + '</span>';
+    }).join(' ');
+    if (hidden.length) {
+      html += ' <span class="muted">· te faltan ' + hidden.length + ' palabra' + (hidden.length === 1 ? '' : 's') + '</span>';
+    }
+    return html;
+  }
+
+  function check() {
+    const item = current();
+    if (!item) return;
+    const actual = els.answer.value;
+    if (!normalize(actual)) {
+      els.feedback.innerHTML = '<span class="muted">Escribe el versículo (o dictalo) para comprobarlo.</span>';
+      els.answer.focus();
+      return;
+    }
+    const score = matchScore(item.text, actual);
+    const pct = percent(score);
+    const ok = score >= 0.95;
+    progress.attempts += 1;
+    if (ok) {
+      checkedOk = true;
+      progress.correct += 1;
+      if (!revealed) {
+        progress.streak += 1;
+        if (progress.streak > progress.bestStreak) progress.bestStreak = progress.streak;
+        progress.score += 10 + (hintCount === 0 ? 5 : 0) + (pct === 100 ? 2 : 0);
+        progress.memorized[refKey(item)] = { t: Date.now(), p: pct };
+      } else {
+        progress.streak = 0;
+      }
+      saveProgress();
+      els.feedback.innerHTML =
+        '<div class="ok">✓ Correcto · ' + (revealed ? 'lo viste antes · ' : '') +
+        '<span class="pct">' + pct + ' %</span></div>' +
+        (revealed
+          ? '<div class="muted">Cuenta como práctica; para marcarlo como memorizado, inténtalo después sin verlo.</div>'
+          : '<div class="muted">Muy bien. Sigue con el siguiente cuando quieras.</div>');
+      els.btnNext.hidden = false;
+      els.btnCheck.disabled = true;
+      els.btnHint.disabled = true;
+      els.btnReveal.disabled = true;
+      els.btnNext.focus();
     } else {
-      historyIndex = commandHistory.length;
-      cmdInput.value = '';
+      progress.streak = 0;
+      saveProgress();
+      const leftoverHint = hintCount ? '<div class="hint">' + escapeHtml(hintText(item)) + '</div>' : '';
+      els.feedback.innerHTML =
+        '<div class="bad">Aún no · <span class="pct">' + pct + ' %</span></div>' +
+        '<div class="muted">En verde lo que va bien; en rojo lo que sobra o no coincide; subrayado lo que falta.</div>' +
+        '<div class="diff">' + renderDiff(item, actual) + '</div>' +
+        leftoverHint;
+      els.answer.focus();
     }
-    e.preventDefault();
   }
-});
 
-document.addEventListener('click', () => cmdInput.focus());
+  async function next() {
+    if (mode === 'random') {
+      await startQueue(await randomVerse());
+      return;
+    }
+    if (index + 1 >= queue.length) {
+      els.feedback.innerHTML =
+        '<div class="ok">Completaste esta lista.</div>' +
+        '<div class="muted">Puedes repetirla, cambiar de modo o escribir otra referencia.</div>';
+      index = 0;
+      renderPrompt();
+      els.btnNext.hidden = true;
+      els.btnCheck.disabled = false;
+      els.btnHint.disabled = false;
+      els.btnReveal.disabled = false;
+      return;
+    }
+    index += 1;
+    await ensureText(current());
+    resetAttempt();
+  }
 
-// Inicio de la terminal
-addLine('Bienvenido a Biblia Código (Modo Autónomo)', 'info');
-addLine('Sistema cargado sin dependencias externas. Listo para usar.', 'success');
-addLine('');
-showHelp();
+  els.btnCheck.addEventListener('click', check);
+  els.btnHint.addEventListener('click', showHint);
+  els.btnReveal.addEventListener('click', showReveal);
+  els.btnNext.addEventListener('click', function () { next().catch(showError); });
+  els.answer.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!checkedOk) check();
+      else next().catch(showError);
+    }
+  });
+
+  els.modes.favorites.addEventListener('click', function () {
+    startFavorites().catch(showError);
+  });
+  els.modes.chapter.addEventListener('click', function () {
+    setMode('chapter');
+    els.feedback.innerHTML = '<span class="info">Escribe un capítulo, por ejemplo sal 23 o jn 3, y pulsa Ir.</span>';
+  });
+  els.modes.random.addEventListener('click', function () {
+    startRandom().catch(showError);
+  });
+  els.modes.custom.addEventListener('click', function () {
+    setMode('custom');
+    els.feedback.innerHTML = '<span class="info">Escribe una referencia (jn 3:16) o un rango (pr 3:5-6).</span>';
+  });
+  els.picker.addEventListener('submit', function (e) {
+    e.preventDefault();
+    startFromInput().catch(showError);
+  });
+
+  function showError(err) {
+    els.boot.hidden = false;
+    els.boot.className = 'error';
+    els.boot.textContent = err && err.message ? err.message : String(err);
+  }
+
+  renderStats();
+  loadManifest()
+    .then(function () {
+      els.boot.textContent = 'Reina Valera 1909 lista · ' + manifest.verseCount + ' versículos. A memorizar.';
+      return startFavorites();
+    })
+    .catch(showError);
+})();
 </script>
 </body>
 </html>
