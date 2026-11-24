@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="refresh" content="0;url=portafolio/presentacion-testamento/">
+<link rel="canonical" href="portafolio/presentacion-testamento/">
+<title>Redirigiendo · Presentación</title>
+<script>location.replace('portafolio/presentacion-testamento/');</script>
+</head>
+<body>
+<p>Redirigiendo a <a href="portafolio/presentacion-testamento/">portafolio/presentacion-testamento/</a>…</p>
+</body>
+</html>
