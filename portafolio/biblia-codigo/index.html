@@ -86,8 +86,8 @@
     grid-template-columns: 1fr 1fr;
     gap: 8px;
   }
-  @media (min-width: 520px) {
-    .modes { grid-template-columns: repeat(4, 1fr); }
+  @media (min-width: 720px) {
+    .modes { grid-template-columns: repeat(5, 1fr); }
   }
   .modes button, .btn, .go {
     font-family: inherit;
@@ -179,6 +179,110 @@
   .log a { color: var(--blue); }
   .boot { color: var(--muted); }
   .error { color: var(--red); }
+  .version-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .version-bar label {
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  select {
+    font-family: inherit;
+    font-size: 16px;
+    color: var(--text);
+    background: var(--btn);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    min-height: 48px;
+    padding: 8px 12px;
+    outline: none;
+    width: 100%;
+  }
+  select:focus { border-color: var(--blue); }
+  .version-bar select { flex: 1; }
+  #reader {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #reader[hidden] { display: none !important; }
+  .read-picks {
+    display: grid;
+    grid-template-columns: 1fr 88px;
+    gap: 8px;
+  }
+  .read-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .read-chapter {
+    font-size: 18px;
+    line-height: 1.7;
+  }
+  .read-v {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 8px 10px;
+    color: var(--text);
+    font: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .read-v sup {
+    color: var(--cyan);
+    font-weight: 600;
+    margin-right: 8px;
+    font-size: 13px;
+  }
+  .read-v[aria-pressed="true"] {
+    border-color: var(--blue);
+    background: #0d2137;
+  }
+  .gateway-box {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--panel);
+  }
+  .gateway-box a.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--cyan);
+    border-color: #1f4b7a;
+    background: #0d2137;
+    text-align: center;
+  }
+  #read-action { display: flex; flex-direction: column; gap: 8px; }
+  #read-action:not([hidden]) {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: #161b22;
+    border-top: 1px solid var(--border);
+  }
+  #read-action[hidden] { display: none !important; }
+  body.has-read-action main { padding-bottom: 120px; }
+  a.gw { color: var(--blue); }
 </style>
 </head>
 <body>
@@ -187,23 +291,50 @@
     <a class="home" href="../../">← Inicio</a>
     <div class="brand">
       <h1>Biblia Código</h1>
-      <span class="sub">Entrenador · RVR 1909</span>
+      <span class="sub">Leer y memorizar</span>
     </div>
   </div>
   <div class="stats" id="stats" aria-live="polite"></div>
 </header>
 <main>
-  <div class="modes" role="tablist" aria-label="Cómo practicar">
+  <div class="modes" role="tablist" aria-label="Modo">
+    <button type="button" id="mode-read" aria-pressed="false">Leer</button>
     <button type="button" id="mode-favorites" aria-pressed="true">Favoritos</button>
     <button type="button" id="mode-chapter" aria-pressed="false">Capítulo</button>
     <button type="button" id="mode-random" aria-pressed="false">Al azar</button>
     <button type="button" id="mode-custom" aria-pressed="false">Referencia</button>
+  </div>
+  <div class="version-bar">
+    <label for="version">Versión</label>
+    <select id="version">
+      <option value="rvr1909" selected>RVR 1909 (completa)</option>
+      <option value="ntv">NTV</option>
+      <option value="nvi">NVI</option>
+      <option value="rvr1960">RVR 1960</option>
+      <option value="rvr1995">RVR 1995</option>
+    </select>
   </div>
   <form class="picker" id="picker" autocomplete="off">
     <input id="ref-input" type="text" enterkeyhint="go" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Ej. jn 3:16, sal 23, pr 3:5-6">
     <button class="go" type="submit" id="ref-go">Ir</button>
   </form>
   <div id="boot" class="boot">Cargando Reina Valera 1909…</div>
+  <section id="reader" hidden>
+    <div class="read-picks">
+      <label class="muted" for="read-book" style="display:none">Libro</label>
+      <select id="read-book" aria-label="Libro"></select>
+      <select id="read-chapter" aria-label="Capítulo"></select>
+    </div>
+    <div class="read-nav">
+      <button type="button" class="btn" id="read-prev">← Anterior</button>
+      <button type="button" class="btn" id="read-next">Siguiente →</button>
+    </div>
+    <div class="prompt-line" id="read-prompt"></div>
+    <div id="read-content"></div>
+    <div id="read-action" hidden>
+      <button type="button" class="btn btn-primary" id="btn-memorize">Memorizar este versículo</button>
+    </div>
+  </section>
   <div class="prompt-line" id="prompt" hidden></div>
   <label class="muted" for="answer" id="answer-label" hidden>Escribe el versículo de memoria</label>
   <textarea id="answer" hidden rows="5" enterkeyhint="done" autocapitalize="sentences" autocorrect="on" spellcheck="true" placeholder="Escribe o dicta el versículo…"></textarea>
@@ -212,6 +343,7 @@
     <button type="button" class="btn" id="btn-hint">Pista</button>
     <button type="button" class="btn" id="btn-reveal">Ver versículo</button>
     <button type="button" class="btn" id="btn-next" hidden>Siguiente</button>
+    <button type="button" class="btn" id="btn-back-read" hidden>Volver a leer</button>
   </div>
   <div id="feedback" aria-live="polite"></div>
   <p class="log">
@@ -222,7 +354,13 @@
 </main>
 <script>
 /* Texto RVR 1909 de data/, compactado desde BibleAquifer/ReinaValera1909
-   v2026-09-18 (dominio público, CC0 1.0). Ver data/SOURCE.txt. */
+   v2026-09-18 (dominio público, CC0 1.0). Ver data/SOURCE.txt.
+
+   NTV, NVI, RVR1960 y RVR1995 están protegidas por derechos de autor.
+   No se copian ni se incluyen. El selector abre Bible Gateway
+   (version=NTV|NVI|RVR1960|RVR1995). Para una API con licencia más
+   adelante, instala window.BibliaTexto (el secreto no va en este JS).
+   Ver data/VERSIONS.txt. */
 (function () {
   const DATA = 'data/';
   const STORE = 'biblia-codigo-progress-v1';
@@ -268,12 +406,71 @@
     btnReveal: document.getElementById('btn-reveal'),
     btnNext: document.getElementById('btn-next'),
     modes: {
+      read: document.getElementById('mode-read'),
       favorites: document.getElementById('mode-favorites'),
       chapter: document.getElementById('mode-chapter'),
       random: document.getElementById('mode-random'),
       custom: document.getElementById('mode-custom')
+    },
+    version: document.getElementById('version'),
+    reader: document.getElementById('reader'),
+    readBook: document.getElementById('read-book'),
+    readChapter: document.getElementById('read-chapter'),
+    readPrev: document.getElementById('read-prev'),
+    readNext: document.getElementById('read-next'),
+    readPrompt: document.getElementById('read-prompt'),
+    readContent: document.getElementById('read-content'),
+    readAction: document.getElementById('read-action'),
+    btnMemorize: document.getElementById('btn-memorize'),
+    btnBackRead: document.getElementById('btn-back-read')
+  };
+
+  /* Proveedor de texto: 'local' (RVR 1909) o 'gateway' (enlace oficial).
+     window.BibliaTexto.getChapter(versionId, bookId, chapter) puede
+     devolver { kind:'licensed', verses:[{n,text}], copyright } cuando
+     exista un backend con clave; nunca pongas la API key en esta página. */
+  const VERSIONS = {
+    rvr1909: {
+      id: 'rvr1909',
+      abbr: 'RVR 1909',
+      name: 'Reina Valera 1909',
+      holder: 'dominio público',
+      source: 'local'
+    },
+    ntv: {
+      id: 'ntv',
+      abbr: 'NTV',
+      name: 'Nueva Traducción Viviente',
+      holder: 'Tyndale House Publishers',
+      source: 'gateway',
+      gateway: 'NTV'
+    },
+    nvi: {
+      id: 'nvi',
+      abbr: 'NVI',
+      name: 'Nueva Versión Internacional',
+      holder: 'Biblica',
+      source: 'gateway',
+      gateway: 'NVI'
+    },
+    rvr1960: {
+      id: 'rvr1960',
+      abbr: 'RVR 1960',
+      name: 'Reina-Valera 1960',
+      holder: 'Sociedades Bíblicas Unidas',
+      source: 'gateway',
+      gateway: 'RVR1960'
+    },
+    rvr1995: {
+      id: 'rvr1995',
+      abbr: 'RVR 1995',
+      name: 'Reina-Valera 1995',
+      holder: 'Sociedades Bíblicas Unidas',
+      source: 'gateway',
+      gateway: 'RVR1995'
     }
   };
+  const READ_STORE = 'biblia-codigo-reader-v1';
 
   let manifest = null;
   const bookCache = new Map();
@@ -285,6 +482,11 @@
   let revealed = false;
   let checkedOk = false;
   let progress = loadProgress();
+  let versionId = 'rvr1909';
+  let readBookId = 'jhn';
+  let readChapter = 3;
+  let readVerse = null;
+  let fromRead = false;
 
   function loadProgress() {
     try {
@@ -581,19 +783,122 @@
     }];
   }
 
+  function currentVersion() {
+    return VERSIONS[versionId] || VERSIONS.rvr1909;
+  }
+
+  function bookMeta(id) {
+    return manifest && manifest.books.find(function (b) { return b.id === id; });
+  }
+
+  function gatewayUrl(version, bookName, chapter, verse) {
+    var ref = bookName + ' ' + chapter;
+    if (verse) ref += ':' + verse;
+    return 'https://www.biblegateway.com/passage/?search=' +
+      encodeURIComponent(ref) + '&version=' + encodeURIComponent(version.gateway);
+  }
+
+  function compareLinkHtml(bookName, chapter, verse) {
+    var v = currentVersion();
+    if (v.source === 'local') return '';
+    var href = gatewayUrl(v, bookName, chapter, verse);
+    return '<div class="meta"><a class="gw" href="' + href +
+      '" target="_blank" rel="noopener">Ver en Bible Gateway (' +
+      escapeHtml(v.abbr) + ')</a> · texto con derechos de autor</div>';
+  }
+
+  async function fetchChapter(book, chapter) {
+    var v = currentVersion();
+    if (window.BibliaTexto && typeof window.BibliaTexto.getChapter === 'function') {
+      var remote = await window.BibliaTexto.getChapter(v.id, book.id, chapter);
+      if (remote) return remote;
+    }
+    if (v.source === 'local') {
+      var data = await loadBook(book.id);
+      var ch = data.chapters[chapter - 1];
+      if (!ch) throw new Error('Capítulo no encontrado.');
+      return {
+        kind: 'local',
+        verses: ch.map(function (text, i) { return { n: i + 1, text: text }; })
+      };
+    }
+    return {
+      kind: 'external',
+      url: gatewayUrl(v, book.name, chapter),
+      verseCount: book.verseCounts[chapter - 1]
+    };
+  }
+
+  function saveReader() {
+    try {
+      localStorage.setItem(READ_STORE, JSON.stringify({
+        bookId: readBookId,
+        chapter: readChapter,
+        versionId: versionId
+      }));
+    } catch (e) { /* ignore */ }
+  }
+
+  function restoreReader() {
+    try {
+      var raw = localStorage.getItem(READ_STORE);
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      if (s.bookId) readBookId = s.bookId;
+      if (s.chapter) readChapter = s.chapter;
+      if (s.versionId && VERSIONS[s.versionId]) {
+        versionId = s.versionId;
+        els.version.value = versionId;
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function fillBookSelects() {
+    els.readBook.innerHTML = manifest.books.map(function (b) {
+      return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>';
+    }).join('');
+  }
+
+  function fillChapterSelect() {
+    var book = bookMeta(readBookId);
+    var n = book ? book.chapters : 1;
+    if (readChapter > n) readChapter = n;
+    if (readChapter < 1) readChapter = 1;
+    var html = '';
+    for (var i = 1; i <= n; i++) html += '<option value="' + i + '">' + i + '</option>';
+    els.readChapter.innerHTML = html;
+    els.readBook.value = readBookId;
+    els.readChapter.value = String(readChapter);
+  }
+
+  function hidePractice() {
+    els.prompt.hidden = true;
+    els.answer.hidden = true;
+    els.answerLabel.hidden = true;
+    els.actions.hidden = true;
+    els.picker.classList.remove('open');
+    if (els.btnBackRead) els.btnBackRead.hidden = true;
+  }
+
   function setMode(next) {
     mode = next;
     for (const [key, btn] of Object.entries(els.modes)) {
       btn.setAttribute('aria-pressed', key === next ? 'true' : 'false');
     }
+    const reading = next === 'read';
+    els.reader.hidden = !reading;
+    if (reading) {
+      hidePractice();
+      fromRead = false;
+    }
     const needsPicker = next === 'chapter' || next === 'custom';
-    els.picker.classList.toggle('open', needsPicker);
+    els.picker.classList.toggle('open', needsPicker && !reading);
     if (next === 'chapter') {
       els.refInput.placeholder = 'Capítulo, ej. sal 23 o jn 3';
     } else if (next === 'custom') {
       els.refInput.placeholder = 'Ej. jn 3:16, pr 3:5-6, 1 jn 1:9';
     }
-    if (needsPicker) els.refInput.focus();
+    if (needsPicker && !reading) els.refInput.focus();
   }
 
   function initials(text) {
@@ -615,20 +920,27 @@
     const total = queue.length;
     const label = mode === 'favorites' ? 'favoritos' :
       mode === 'chapter' ? 'capítulo' :
-      mode === 'random' ? 'al azar' : 'referencia';
+      mode === 'random' ? 'al azar' :
+      mode === 'verse' ? 'desde la lectura' : 'referencia';
     const mem = progress.memorized[refKey(item)] ? ' · ya memorizado' : '';
     els.prompt.hidden = false;
     els.prompt.innerHTML =
       '<div><span class="muted">biblia&gt;</span> <span class="cmd">memorizar ' +
       escapeHtml(refKey(item)) + '</span></div>' +
-      '<div class="meta">' + (index + 1) + ' / ' + total + ' · ' + label + mem + '</div>';
+      '<div class="meta">' + (index + 1) + ' / ' + total + ' · ' + label + mem +
+      ' · RVR 1909</div>' +
+      compareLinkHtml(item.bookName, item.chapter, item.verse);
   }
 
   function showPractice() {
     els.boot.hidden = true;
+    els.reader.hidden = true;
+    document.body.classList.remove('has-read-action');
+    if (els.readAction) { els.readAction.hidden = true; }
     els.answer.hidden = false;
     els.answerLabel.hidden = false;
     els.actions.hidden = false;
+    if (els.btnBackRead) els.btnBackRead.hidden = !fromRead;
     renderPrompt();
     renderStats();
   }
@@ -660,6 +972,7 @@
   }
 
   async function startFavorites() {
+    fromRead = false;
     setMode('favorites');
     await startQueue(buildFavorites());
   }
@@ -843,6 +1156,178 @@
     startFromInput().catch(showError);
   });
 
+  function adjacentChapter(dir) {
+    var books = manifest.books;
+    var bi = books.findIndex(function (b) { return b.id === readBookId; });
+    if (bi < 0) bi = 0;
+    var ch = readChapter + dir;
+    if (ch < 1) {
+      if (bi === 0) return null;
+      bi -= 1;
+      ch = books[bi].chapters;
+    } else if (ch > books[bi].chapters) {
+      if (bi === books.length - 1) return null;
+      bi += 1;
+      ch = 1;
+    }
+    return { book: books[bi], chapter: ch };
+  }
+
+  function updateNavButtons() {
+    els.readPrev.disabled = !adjacentChapter(-1);
+    els.readNext.disabled = !adjacentChapter(1);
+  }
+
+  function selectReadVerse(n) {
+    readVerse = n;
+    var nodes = els.readContent.querySelectorAll('.read-v');
+    nodes.forEach(function (btn) {
+      btn.setAttribute('aria-pressed', Number(btn.getAttribute('data-verse')) === n ? 'true' : 'false');
+    });
+    var book = bookMeta(readBookId);
+    var v = currentVersion();
+    var html = '<button type="button" class="btn btn-primary" id="btn-memorize">Memorizar este versículo</button>';
+    if (v.source !== 'local') {
+      html += '<a class="btn gw" id="btn-gw-verse" href="' +
+        gatewayUrl(v, book.name, readChapter, n) +
+        '" target="_blank" rel="noopener">Ver ' + escapeHtml(book.name + ' ' + readChapter + ':' + n) +
+        ' en Bible Gateway</a>';
+    }
+    els.readAction.innerHTML = html;
+    els.readAction.hidden = false;
+    document.body.classList.add('has-read-action');
+    document.getElementById('btn-memorize').addEventListener('click', function () {
+      memorizeFromRead().catch(showError);
+    });
+    var selected = els.readContent.querySelector('.read-v[aria-pressed="true"]');
+    if (selected && selected.scrollIntoView) selected.scrollIntoView({ block: 'center', inline: 'nearest' });
+  }
+
+  async function renderReader() {
+    var book = bookMeta(readBookId);
+    if (!book) throw new Error('Libro no encontrado.');
+    fillChapterSelect();
+    updateNavButtons();
+    readVerse = null;
+    els.readAction.hidden = true;
+    els.readAction.innerHTML = '';
+    document.body.classList.remove('has-read-action');
+    els.boot.hidden = true;
+    els.readPrompt.innerHTML =
+      '<div><span class="muted">biblia&gt;</span> <span class="cmd">leer ' +
+      escapeHtml(book.name + ' ' + readChapter) + '</span></div>' +
+      '<div class="meta">' + escapeHtml(currentVersion().abbr) + '</div>';
+    els.readContent.innerHTML = '<p class="muted">Cargando…</p>';
+    var data = await fetchChapter(book, readChapter);
+    saveReader();
+    if (data.kind === 'local' || data.kind === 'licensed') {
+      var html = '<div class="read-chapter">';
+      data.verses.forEach(function (vs) {
+        html += '<button type="button" class="read-v" data-verse="' + vs.n +
+          '"><sup>' + vs.n + '</sup>' + escapeHtml(vs.text) + '</button>';
+      });
+      html += '</div>';
+      if (data.copyright) {
+        html += '<p class="muted">' + escapeHtml(data.copyright) + '</p>';
+      }
+      els.readContent.innerHTML = html;
+      els.readContent.querySelectorAll('.read-v').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          selectReadVerse(Number(btn.getAttribute('data-verse')));
+        });
+      });
+    } else {
+      var v = currentVersion();
+      var numbers = '';
+      var count = data.verseCount || 0;
+      for (var i = 1; i <= count; i++) {
+        numbers += '<button type="button" class="read-v" data-verse="' + i +
+          '"><sup>' + i + '</sup><span class="muted">Versículo ' + i + '</span></button>';
+      }
+      els.readContent.innerHTML =
+        '<div class="gateway-box">' +
+        '<p>El texto de la <strong>' + escapeHtml(v.name) + ' (' + escapeHtml(v.abbr) +
+        ')</strong> está protegido por derechos de autor (' + escapeHtml(v.holder) +
+        '). No lo copiamos ni lo mostramos aquí.</p>' +
+        '<a class="btn" href="' + data.url + '" target="_blank" rel="noopener">Ver ' +
+        escapeHtml(book.name + ' ' + readChapter) + ' en Bible Gateway</a>' +
+        '<p class="muted">Puedes elegir un versículo para memorizarlo en RVR 1909, o leer esta versión en Bible Gateway.</p>' +
+        '</div>' +
+        (numbers ? '<div class="read-chapter">' + numbers + '</div>' : '');
+      els.readContent.querySelectorAll('.read-v').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          selectReadVerse(Number(btn.getAttribute('data-verse')));
+        });
+      });
+    }
+  }
+
+  async function startReader() {
+    setMode('read');
+    fillBookSelects();
+    fillChapterSelect();
+    await renderReader();
+  }
+
+  async function goChapter(dir) {
+    var next = adjacentChapter(dir);
+    if (!next) return;
+    readBookId = next.book.id;
+    readChapter = next.chapter;
+    readVerse = null;
+    await renderReader();
+  }
+
+  async function memorizeFromRead() {
+    if (!readVerse) return;
+    var book = bookMeta(readBookId);
+    var items = versesFromParsed({
+      book: book,
+      chapter: readChapter,
+      from: readVerse,
+      to: readVerse
+    });
+    fromRead = true;
+    mode = 'verse';
+    for (const btn of Object.values(els.modes)) {
+      btn.setAttribute('aria-pressed', 'false');
+    }
+    els.picker.classList.remove('open');
+    await startQueue(items);
+  }
+
+  async function onVersionChange() {
+    versionId = els.version.value;
+    saveReader();
+    if (mode === 'read') await renderReader();
+    else renderPrompt();
+  }
+
+  els.modes.read.addEventListener('click', function () {
+    startReader().catch(showError);
+  });
+  els.version.addEventListener('change', function () {
+    onVersionChange().catch(showError);
+  });
+  els.readBook.addEventListener('change', function () {
+    readBookId = els.readBook.value;
+    readChapter = 1;
+    renderReader().catch(showError);
+  });
+  els.readChapter.addEventListener('change', function () {
+    readChapter = parseInt(els.readChapter.value, 10) || 1;
+    renderReader().catch(showError);
+  });
+  els.readPrev.addEventListener('click', function () {
+    goChapter(-1).catch(showError);
+  });
+  els.readNext.addEventListener('click', function () {
+    goChapter(1).catch(showError);
+  });
+  els.btnBackRead.addEventListener('click', function () {
+    startReader().catch(showError);
+  });
+
   function showError(err) {
     els.boot.hidden = false;
     els.boot.className = 'error';
@@ -852,6 +1337,9 @@
   renderStats();
   loadManifest()
     .then(function () {
+      fillBookSelects();
+      restoreReader();
+      fillChapterSelect();
       els.boot.textContent = 'Reina Valera 1909 lista · ' + manifest.verseCount + ' versículos. A memorizar.';
       return startFavorites();
     })

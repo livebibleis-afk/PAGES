@@ -50,7 +50,7 @@ Las rutas antiguas en la raíz (`casa.html`, `antojos.html`, …) y en `demo/` /
 | **E3LT27 · openPlan3D** | Recorrido y editor 3D (v2) | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/e3lt27-v2/) |
 | **E3LT27 Replanteo** | Studio CAD de replanteo y metrados | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/e3lt27-replanteo/) |
 | **Multiplayer** | Demo interactiva | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/multiplayer/) |
-| **Biblia Código** | Entrenador para memorizar versículos (RVR 1909) | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/biblia-codigo/) |
+| **Biblia Código** | Lectura y memorización de versículos (RVR 1909; otras versiones vía Bible Gateway) | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/biblia-codigo/) |
 | **Tutorial Gemini** | Guía Gemini + GitHub Actions + Telegram | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/tutorial-gemini/) |
 | **Press** | Presentación sobre el testamento cerrado | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/press/) |
 | **Presentación testamento** | Versión para orador del mismo tema | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/presentacion-testamento/) |

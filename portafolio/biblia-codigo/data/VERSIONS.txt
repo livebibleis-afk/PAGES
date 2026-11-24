@@ -1,0 +1,32 @@
+Versiones en Biblia Código
+==========================
+
+RVR 1909
+  Texto completo incluido (dominio público, CC0). Ver SOURCE.txt.
+
+NTV, NVI, RVR 1960 y RVR 1995
+  Están protegidas por derechos de autor. Esta app NO copia, descarga
+  ni incluye su texto. El selector de versión abre el pasaje actual en
+  Bible Gateway, que es el enlace oficial que ellos documentan:
+
+  https://www.biblegateway.com/usage/
+  https://www.biblegateway.com/usage/linking/versionslist/
+
+  Códigos de versión (Bible Gateway redirige los IDs numéricos a estos):
+    NTV      (Nueva Traducción Viviente, Tyndale)     — ID 159
+    NVI      (Nueva Versión Internacional, Biblica)   — ID 42
+    RVR1960  (Reina-Valera 1960, SBU)                 — ID 60
+    RVR1995  (Reina-Valera 1995, SBU)                 — ID 61
+
+  Ejemplo:
+    https://www.biblegateway.com/passage/?search=Juan+3:16&version=NTV
+
+Cómo añadir más adelante una API con licencia
+  Implementar un backend que guarde la clave y exponga, en el cliente:
+
+    window.BibliaTexto.getChapter(versionId, bookId, chapter)
+      → { kind: 'licensed', verses: [{n, text}], copyright }
+
+  No colocar nunca la API key en este HTML/JS (lo advierte API.Bible:
+  https://docs.api.bible/guides/passages/ y el demo oficial en
+  https://github.com/americanbible/api-bible-demo).
