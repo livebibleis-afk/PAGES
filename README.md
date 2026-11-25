@@ -25,6 +25,7 @@ PAGES/
 │   ├── casas-del-valle/
 │   ├── casas-del-valle-3d/
 │   ├── casa/
+│   ├── planos-svg/
 │   ├── e3lt27/
 │   └── ...
 ├── clientes/           # Sitios de negocios locales
@@ -46,6 +47,7 @@ Las rutas antiguas en la raíz (`casa.html`, `antojos.html`, …) y en `demo/` /
 | **Casas del Valle · CDVN15** | Recorrido 3D de la casa (órbita y caminar) | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/casas-del-valle/) |
 | **Casas del Valle 3D** | Visor 3D anterior de la casa individual | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/casas-del-valle-3d/) |
 | **Casa** | Visualizador arquitectónico CAD 2D/3D | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/casa/) |
+| **Planos SVG** | Editor táctil de planos de planta (muros, puertas, cotas, foto) | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/planos-svg/) |
 | **E3LT27** | Modelo 3D interactivo de la vivienda | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/e3lt27/) |
 | **E3LT27 · openPlan3D** | Recorrido y editor 3D (v2) | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/e3lt27-v2/) |
 | **E3LT27 Replanteo** | Studio CAD de replanteo y metrados | [Abrir](https://livebibleis-afk.github.io/PAGES/portafolio/e3lt27-replanteo/) |

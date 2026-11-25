@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Planos SVG">
+<meta name="description" content="Editor táctil de planos de planta: muros, puertas, ventanas, cotas y calibración de foto.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%230d1117' width='32' height='32' rx='6'/%3E%3Crect fill='%23f3efe6' x='6' y='6' width='20' height='20'/%3E%3Cpath fill='none' stroke='%231c1914' stroke-width='2' d='M8 22 V10 H24 V22'/%3E%3C/svg%3E">
+<title>Planos SVG · Editor de planos</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <a class="icon-btn" href="../../" aria-label="Inicio">←</a>
+  <h1>Planos SVG</h1>
+  <button type="button" class="icon-btn" id="btn-undo" aria-label="Deshacer" title="Deshacer">↶</button>
+  <button type="button" class="icon-btn" id="btn-redo" aria-label="Rehacer" title="Rehacer">↷</button>
+  <button type="button" class="icon-btn" id="btn-delete" aria-label="Borrar" title="Borrar" disabled>⌫</button>
+  <button type="button" class="icon-btn" id="btn-menu" aria-label="Menú" title="Menú">☰</button>
+</header>
+
+<div id="stage-wrap">
+  <svg id="stage" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lienzo del plano"></svg>
+  <div id="hint" class="hint">Elige Muro y toca dos puntos. Puedes escribir el largo exacto.</div>
+</div>
+
+<aside id="props" hidden>
+  <div class="props-row" id="props-body"></div>
+</aside>
+
+<div id="length-bar">
+  <label for="input-length">Largo (m)</label>
+  <input id="input-length" type="text" inputmode="decimal" enterkeyhint="done" placeholder="ej. 4.50" autocomplete="off">
+  <button type="button" class="btn" id="btn-apply-length">Aplicar</button>
+  <label class="chk"><input type="checkbox" id="chk-ortho" checked> Ortogonal</label>
+</div>
+
+<nav id="tools" aria-label="Herramientas">
+  <button type="button" class="tool" id="tool-select" aria-pressed="true" data-tool="select">Seleccionar</button>
+  <button type="button" class="tool" id="tool-wall" aria-pressed="false" data-tool="wall">Muro</button>
+  <button type="button" class="tool" id="tool-door" aria-pressed="false" data-tool="door">Puerta</button>
+  <button type="button" class="tool" id="tool-window" aria-pressed="false" data-tool="window">Ventana</button>
+  <button type="button" class="tool" id="tool-dim" aria-pressed="false" data-tool="dim">Cota</button>
+  <button type="button" class="tool" id="tool-label" aria-pressed="false" data-tool="label">Texto</button>
+  <button type="button" class="tool" id="tool-calibrate" aria-pressed="false" data-tool="calibrate">Calibrar</button>
+</nav>
+
+<div id="menu" class="sheet" hidden>
+  <h2>Archivo y opciones</h2>
+  <div class="sheet-grid">
+    <button type="button" class="btn" id="btn-new">Nuevo plano</button>
+    <button type="button" class="btn" id="btn-bg">Fondo (foto)</button>
+    <button type="button" class="btn" id="btn-import-json">Importar JSON</button>
+    <button type="button" class="btn" id="btn-import-svg">Importar SVG</button>
+    <button type="button" class="btn" id="btn-export-json">Exportar JSON</button>
+    <button type="button" class="btn" id="btn-export-svg">Exportar SVG</button>
+    <button type="button" class="btn" id="btn-export-png">Exportar PNG</button>
+  </div>
+  <label class="slider-row">Opacidad del fondo
+    <input type="range" id="rng-opacity" min="0" max="100" value="45">
+    <span id="opacity-val">45%</span>
+  </label>
+  <label class="chk"><input type="checkbox" id="chk-auto-dim" checked> Cotas automáticas en muros</label>
+  <label class="chk"><input type="checkbox" id="chk-grid" checked> Mostrar rejilla</label>
+  <p class="fine">El plano se guarda solo en este teléfono (localStorage). La foto de fondo se omite si no cabe.</p>
+  <button type="button" class="btn btn-ghost" id="btn-close-menu">Cerrar</button>
+</div>
+
+<input id="file-bg" type="file" accept="image/*" hidden>
+<input id="file-json" type="file" accept="application/json,.json" hidden>
+<input id="file-svg" type="file" accept="image/svg+xml,.svg" hidden>
+
+<script src="app.js"></script>
+</body>
+</html>
