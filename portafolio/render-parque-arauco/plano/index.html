@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=0.4, maximum-scale=8, user-scalable=yes, viewport-fit=cover">
+<title>Plano SVG · Zona Seating Exterior – Parque Arauco Minka</title>
+<meta name="description" content="Plano de planta en SVG de la zona seating exterior de Parque Arauco Minka. Escala 1:100.">
+<style>
+  :root { --paper:#f7f4ee; --ink:#1a1a1a; --muted:#444; --line:#d7d2c8; --accent:#8a5a12; --btn:#1a1a1a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", sans-serif; }
+  body { display: flex; flex-direction: column; min-height: 100dvh; }
+  header {
+    flex: 0 0 auto;
+    padding: max(10px, env(safe-area-inset-top)) 14px 10px;
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+    background: rgba(247,244,238,.94);
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 { margin: 0; font-size: 1.05rem; line-height: 1.25; }
+  header p { margin: 2px 0 0; font-size: .82rem; color: var(--muted); }
+  nav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  nav a {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 44px; padding: 8px 14px; border-radius: 999px;
+    text-decoration: none; font-size: .9rem; font-weight: 600;
+    border: 1px solid var(--ink); color: var(--ink); background: #fff;
+  }
+  nav a.primary { background: var(--btn); color: var(--paper); border-color: var(--btn); }
+  .hint { margin: 8px 0 0; font-size: .75rem; color: var(--muted); }
+  .viewer {
+    flex: 1 1 auto;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    background: var(--paper);
+    padding: 8px 8px max(12px, env(safe-area-inset-bottom));
+  }
+  .viewer img {
+    display: block;
+    width: 2000px;
+    max-width: none;
+    height: auto;
+    background: var(--paper);
+  }
+  @media (min-width: 900px) {
+    .viewer img { width: min(1600px, 100%); margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Zona Seating Exterior — Parque Arauco Minka</h1>
+    <p>Plano de planta · iluminación y equipos · escala 1:100</p>
+    <nav>
+      <a href="../">Ver render 3D</a>
+      <a class="primary" href="planta-seating.svg" download="planta-seating-parque-arauco-minka.svg">Descargar SVG</a>
+      <a href="planta-seating.png" download="planta-seating-parque-arauco-minka.png">Descargar PNG</a>
+    </nav>
+    <p class="hint">Pellizca para acercar · arrastra o desliza para recorrer el plano</p>
+  </header>
+  <div class="viewer">
+    <img src="planta-seating.svg" width="1782" height="1260" alt="Plano de planta en SVG de la zona seating exterior de Parque Arauco Minka, escala 1:100. Muestra bancas, jardineras, 23 estacas GU10, cinta LED, tomacorrientes y tablero eléctrico.">
+  </div>
+</body>
+</html>

@@ -12,3 +12,5 @@ button.on{background:#d98a2b;border-color:#f1b25f}
 #hint{position:fixed;bottom:max(10px,env(safe-area-inset-bottom));right:12px;font-size:11px;opacity:.6;pointer-events:none}
 .lbl{font-size:11px;color:#fff;background:rgba(0,0,0,.55);padding:2px 7px;border-radius:8px;white-space:nowrap;pointer-events:none}
 body.noui #ui,body.noui #info,body.noui #hint{display:none}
+
+a.btn{font:inherit;font-size:13px;color:#fff;background:rgba(20,26,40,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:7px 12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}a.btn.plan{background:#d98a2b;border-color:#f1b25f}#info .info-link{color:#f1b25f}
